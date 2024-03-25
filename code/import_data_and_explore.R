@@ -1,4 +1,3 @@
-
 # Load required libraries -------------------------------------------------
 
 ## MAKE SURE ALL REQUIREMETS ARE MET AND LOAD LIBRARIES
@@ -37,6 +36,11 @@ if (!requireNamespace("FactoMineR", quietly = TRUE)) {
   install.packages("FactoMineR")
 }
 # Check if the package is already installed
+if (!requireNamespace("factoextra", quietly = TRUE)) {
+  # If not installed, install it
+  install.packages("factoextra")
+}
+# Check if the package is already installed
 if (!requireNamespace("ggbiplot", quietly = TRUE)) {
   # If not installed, install it
   install.packages("ggbiplot")
@@ -53,6 +57,8 @@ suppressPackageStartupMessages({
   library(FactoMineR)
   library(devtools)
   library(ggbiplot)
+  library(factoextra)
+  library(ggrepel)
 })
 
 
@@ -124,25 +130,60 @@ print(stage_hist2)
 
 # pc ----------------------------------------------------------------------
 
-#NOT WORKING YET
 
-kraken_norm = scale(kraken_COAD[,-1])
-corr_matrix <- cor(kraken_norm)
+colnames(kraken_meta_filt)[1] <- "id"
+colnames(kraken_COAD)[1] <- "id"
 
-data.pca <- princomp(corr_matrix)
+kraken_merge <- merge(kraken_COAD,kraken_meta_filt[,c('id','stage_category')], by='id',all.x=TRUE)
+contaminant_columns <- grepl("contaminant", names(kraken_merge), ignore.case = TRUE)
+
+# Subset the dataframe to exclude contaminant columns
+kraken_merge <- kraken_merge[, !contaminant_columns]
+
+
+colnames(kraken_merge) <- sub(".*__(.*)$", "\\1", colnames(kraken_merge))
+kraken_pca <- kraken_merge[ , !(names(kraken_merge) %in% c("id", "stage_category"))]
+kraken_pca <- scale(kraken_pca)
+
+# METHOD 1
+#corr_matrix <- cor(kraken_pca)
+#data.pca <- princomp(corr_matrix)
+#data.pca$loadings[1:10, 1:2]
+
+# METHOD 2
+data.pca <- prcomp(kraken_pca, center = FALSE, scale = FALSE)
+data.pca$rotation[1:10, 1:2]
+
 summary(data.pca)
-data.pca$loadings[1:10, 1:2]
+
 fviz_eig(data.pca, addlabels = TRUE)
 
+## GRAPHS OF INDIVIDUALS
+# PCA colored by cos2
+fviz_pca_ind(data.pca, geom="point",col.ind="cos2")+
+  scale_color_gradient2(low="white", mid="blue",
+                        high="red", midpoint=0.6)
 
-#pc <- prcomp(kraken_norm, center=TRUE, scale=TRUE)
-#attributes(pc)
-#summary(pc)
+# Color individuals by group
+fviz_pca_ind(data.pca, label="none", 
+             col.ind = kraken_merge$stage_category)
 
-#g <- ggbiplot(pc,
-#              obs.scale = 1,
-#              var.scale = 1)
-#g <- g + scale_color_discrete(name = '')
-#g <- g + theme(legend.direction = 'horizontal',
-#            legend.position = 'top')
-#print(g)
+
+##GRAPHS OF VARIABLES
+#fviz_pca_var(data.pca, select.var = list(contrib = 20))
+
+
+g <- fviz_pca_biplot(data.pca,
+                     label='var', 
+                     repel = TRUE, 
+                     select.var = list(contrib = 5),
+                     alpha.ind = 0.5,
+                     col.ind = "gray",
+                     col.var = 'blue',
+                     labelsize = 3,
+                     arrowsize = 1,
+                     alpha.var=0.15,
+                     #col.ind = kraken_merge$stage_category
+)
+
+print(g)
