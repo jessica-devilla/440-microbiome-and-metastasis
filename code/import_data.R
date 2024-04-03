@@ -1,50 +1,3 @@
-# Load required libraries -------------------------------------------------
-
-## MAKE SURE ALL REQUIREMETS ARE MET AND LOAD LIBRARIES
-
-# Check if the packages is already installed
-if (!requireNamespace("readr", quietly = TRUE)) {
-  # If not installed, install it
-  install.packages("readr")
-}
-# Check if the package is already installed
-if (!requireNamespace("ggplot2", quietly = TRUE)) {
-  # If not installed, install it
-  install.packages("ggplot2")
-}
-
-# Check if the package is already installed
-if (!requireNamespace("dplyr", quietly = TRUE)) {
-  # If not installed, install it
-  install.packages("dplyr")
-}
-
-# Check if the package is already installed
-if (!requireNamespace("corrr", quietly = TRUE)) {
-  # If not installed, install it
-  install.packages("corrr")
-}
-
-# Check if the package is already installed
-if (!requireNamespace("ggcorrplot", quietly = TRUE)) {
-  # If not installed, install it
-  install.packages("ggcorrplot")
-}
-# Check if the package is already installed
-if (!requireNamespace("FactoMineR", quietly = TRUE)) {
-  # If not installed, install it
-  install.packages("FactoMineR")
-}
-# Check if the package is already installed
-if (!requireNamespace("factoextra", quietly = TRUE)) {
-  # If not installed, install it
-  install.packages("factoextra")
-}
-# Check if the package is already installed
-if (!requireNamespace("ggbiplot", quietly = TRUE)) {
-  # If not installed, install it
-  install.packages("ggbiplot")
-}
 
 
 # load the libraries
@@ -66,28 +19,20 @@ suppressPackageStartupMessages({
 
 ##### IMPORT DATA AND FORMAT
 
-### TEST IMPORT
-# read csv files from data folder
-#kraken_meta_path <- "C:\Users\jessn\Documents\MIT_G1\20_440\pset6\data\Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv"
-# set path to csv files via directory
-kraken_path <- "data/Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv"
-
-#note these import methods do not import the data as in the csv
-kraken_data <- read.csv(kraken_path)
-#import by directly calling git hub url
-kraken_data_git <- read.csv("https://media.githubusercontent.com/media/jessica-devilla/JD_20_440_pset6/main/data/Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv")
 
 # import kraken data from poore et al
 kraken_url <- "https://media.githubusercontent.com/media/jessica-devilla/JD_20_440_pset6/main/data/Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv"
-#kraken_data <- read_csv(url(kraken_url),col_types = cols(.default = col_character()))
 kraken_data <- read_csv(url(kraken_url),show_col_types = FALSE)
 kraken_df <- as.data.frame(kraken_data, stringsAsFactors = FALSE)
 
 # import kraken metadata from poore et al
 kraken_meta_url <- "https://media.githubusercontent.com/media/jessica-devilla/JD_20_440_pset6/main/data/Metadata-TCGA-Kraken-17625-Samples.csv"
-#kraken_metadata <-read_csv(url(kraken_meta_url),col_types = cols(.default = col_character()))
 kraken_metadata <-read_csv(url(kraken_meta_url),show_col_types = FALSE)
 kraken_metadata_df <- as.data.frame(kraken_metadata, stringsAsFactors = FALSE)
+
+# Save the dataframes as an R file
+saveRDS(kraken_df, file = "data/kraken_df.R")
+saveRDS(kraken_df, file = "data/kraken_metadatadf.R")
 
 # Subset the dataframe to get only values from COAD patients
 kraken_metaCOAD <- subset(kraken_metadata_df, disease_type == "Colon Adenocarcinoma")
@@ -96,6 +41,10 @@ kraken_metaCOAD <- subset(kraken_metadata_df, disease_type == "Colon Adenocarcin
 ids <- kraken_metaCOAD[,1]
 kraken_COAD <- kraken_df[kraken_df[,1] %in% ids,]
 #dim(kraken_COAD) # check to see if dimensions matched
+
+# Save the dataframes as an R file
+saveRDS(kraken_COAD, file = "data/kraken_COAD.R")
+saveRDS(kraken_metaCOAD, file = "data/kraken_metaCOAD.R")
 
 #### EXPLORATORY ANALYSIS OF THE DATASET
 
