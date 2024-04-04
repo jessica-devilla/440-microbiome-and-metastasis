@@ -11,4 +11,19 @@ Hermida LC, Gertz EM, Ruppin E. Predicting cancer prognosis and drug response fr
 - https://zenodo.org/records/6471321
 - https://github.com/ruppinlab/tcga-microbiome-prediction/tree/v1.2 
 
-TEST EDIT FROM R PROJECT
+Clone the github repository into desired directory using Git Bash. 
+
+```bash
+git clone https://github.com/jessica-devilla/440-microbiome-and-metastasis.git
+```
+
+After cloning the repository, you may need to make the R script executable. Run the following command in the terminal from the root of the cloned repository:
+```bash
+chmod +x ./code/impot_data.R
+```
+
+To import Poore et al data and save R data files to your local machine, run:
+
+```bash
+Rscript code/import_data.R
+```
