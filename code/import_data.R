@@ -14,15 +14,6 @@ cat("Importing data from Poore et al...\n")
 # load the libraries
 suppressPackageStartupMessages({
   library(readr)
-  library(ggplot2)
-  library(dplyr)
-  library(corrr)
-  library(ggcorrplot)
-  library(FactoMineR)
-  library(devtools)
-  library(ggbiplot)
-  library(factoextra)
-  library(ggrepel)
 })
 
 
