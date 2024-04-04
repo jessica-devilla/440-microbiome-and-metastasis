@@ -1,7 +1,7 @@
-install.packages("dplyr")
-library("dplyr")
-colon_metadata <- Metadata_TCGA_Kraken_17625_Samples %>%
-  filter(primary_site == "Colorectal")
+colon_metadata <- kraken_metaCOAD
+Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data <- kraken_df
+
+
 
 stageI_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IA", "Stage IB","Stage I"))
 stageII_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IIA", "Stage IIB", "Stage II"))
