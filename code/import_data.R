@@ -30,7 +30,7 @@ suppressPackageStartupMessages({
 
 ##### IMPORT DATA AND FORMAT
 
-
+cat("Downloading files from github...\n")
 # import kraken data from poore et al
 kraken_url <- "https://media.githubusercontent.com/media/jessica-devilla/JD_20_440_pset6/main/data/Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv"
 kraken_data <- read_csv(url(kraken_url),show_col_types = FALSE)
@@ -41,6 +41,8 @@ kraken_meta_url <- "https://media.githubusercontent.com/media/jessica-devilla/JD
 kraken_metadata <-read_csv(url(kraken_meta_url),show_col_types = FALSE)
 kraken_metadata_df <- as.data.frame(kraken_metadata, stringsAsFactors = FALSE)
 
+
+cat("Saving RDS files...\n")
 # Save the dataframes as an R file
 saveRDS(kraken_df, file = "data/kraken_df.RDS")
 saveRDS(kraken_df, file = "data/kraken_metadatadf.RDS")
