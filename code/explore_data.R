@@ -8,7 +8,24 @@ gc() # free up memory and report the memory usage
 # Print a starting message
 cat("Running exploratory analysis...\n")
 
+# load the libraries
+suppressPackageStartupMessages({
+  library(readr)
+  library(ggplot2)
+  library(dplyr)
+  library(corrr)
+  library(ggcorrplot)
+  library(FactoMineR)
+  library(devtools)
+  library(ggbiplot)
+  library(factoextra)
+  library(ggrepel)
+})
+
 #### EXPLORATORY ANALYSIS OF THE DATASET
+kraken_COAD = readRDS('data/kraken_COAD.RDS')
+kraken_metaCOAD  =readRDS('data/kraken_metaCOAD.RDS')
+
 
 # plot stage labels
 stage_hist1 <- ggplot(kraken_metaCOAD, aes(x = pathologic_stage_label)) +
@@ -51,7 +68,7 @@ contaminant_columns <- grepl("contaminant", names(kraken_merge), ignore.case = T
 # Subset the dataframe to exclude contaminant columns
 kraken_merge <- kraken_merge[, !contaminant_columns]
 
-
+#merge by species
 colnames(kraken_merge) <- sub(".*__(.*)$", "\\1", colnames(kraken_merge))
 kraken_pca <- kraken_merge[ , !(names(kraken_merge) %in% c("id", "stage_category"))]
 kraken_pca <- scale(kraken_pca)
