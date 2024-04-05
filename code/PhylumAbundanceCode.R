@@ -57,6 +57,9 @@ for (phylum_name in unique_phylum_names_stageI){
   # Filter columns corresponding to the current phylum
   phylum_columns_stageI <- grep(paste0("\\.p__",phylum_name,"\\."), names(stageI_data)[-1], value = TRUE, ignore.case = TRUE)
   
+  
+  
+  
   # Calculate the total amount for the current phylum across all samples
   total_amount_phylum_stageI <- sum(stageI_data[, phylum_columns_stageI])
   
