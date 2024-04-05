@@ -73,6 +73,8 @@ kraken_merge <- kraken_merge[, !contaminant_columns]
 # exclude viruses
 kraken_merge <- remove_viruses(kraken_merge)
 
+saveRDS(kraken_merge, file = "data/kraken_merge.RDS")
+
 #merge by genus
 colnames(kraken_merge) <- sub(".*__(.*)$", "\\1", colnames(kraken_merge))
 kraken_pca <- kraken_merge[ , !(names(kraken_merge) %in% c("id", "stage_category",'sample_type'))]
