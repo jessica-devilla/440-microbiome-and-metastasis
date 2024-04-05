@@ -117,3 +117,166 @@ g <- fviz_pca_biplot(data.pca,
 print(g)
 
 x <- readRDS("data/kraken_df.R")
+
+# subset dataframe function -----------------------------------------------
+
+subset_and_summarize_by_prefix <- function(data, prefix) {
+  # Subset by prefix
+  colnames(data) <- sub(paste0("^.*", prefix, "__([^\\.]+)\\..*"), "\\1", colnames(data))
+  
+  # Remove contaminant columns
+  contaminant_columns <- grepl("contaminant", names(data), ignore.case = TRUE)
+  data <- data[, !contaminant_columns]
+  
+  # Remove virus columns
+  virus_columns <- grepl("^k__", names(data), ignore.case = TRUE)
+  data <- data[, !virus_columns]
+  
+  # Get unique phylum names
+  phylas <- unique(sapply(strsplit(names(data), "\\."), `[`, 1))
+  
+  # Prepare a new dataframe to store sums
+  sums_df <- data.frame(id = data[1])
+  
+  # Sum like-named columns across rows
+  for(phylum in phylas) {
+    pattern <- paste0("^", phylum, "\\.")
+    cols <- grep(pattern, names(data), value = TRUE)
+    
+    # Using apply() to sum across rows for matched columns
+    if(length(cols) > 0) {
+      row_sums <- apply(data[, cols, drop = FALSE], 1, sum)
+      sums_df[[phylum]] <- row_sums  # Storing the sums in the new dataframe
+    }
+  }
+  
+  return(sums_df)
+}
+
+# pca by phylum -----------------------------------------------------------
+
+kraken_phyla = kraken_COAD
+
+# Assuming kraken_phyla is your dataframe
+kraken_phyla_sums <- subset_and_summarize_by_prefix(kraken_phyla, "p")
+
+
+kraken_phyla_sums <- merge(kraken_phyla_sums,kraken_meta_filt[,c('id','stage_category')], by='id',all.x=TRUE)
+kraken_pca <- kraken_phyla_sums[ , !(names(kraken_phyla_sums) %in% c("id", "stage_category"))]
+
+kraken_pca <- scale(kraken_pca)
+
+# Run PCA
+data.pca <- prcomp(kraken_pca, center = FALSE, scale = FALSE)
+data.pca$rotation[1:10, 1:2]
+
+summary(data.pca)
+
+fviz_eig(data.pca, addlabels = TRUE)
+
+## GRAPHS OF INDIVIDUALS
+# PCA colored by cos2
+fviz_pca_ind(data.pca, geom="point",col.ind="cos2")+
+  scale_color_gradient2(low="white", mid="blue",
+                        high="red", midpoint=0.6)
+
+# Color individuals by group
+fviz_pca_ind(data.pca, label="none", 
+             col.ind = kraken_phyla_sums$stage_category)
+
+
+##GRAPHS OF VARIABLES
+#fviz_pca_var(data.pca, select.var = list(contrib = 20))
+
+
+g <- fviz_pca_biplot(data.pca,
+                     label='var', 
+                     repel = TRUE, 
+                     select.var = list(contrib = 5),
+                     alpha.ind = 0.5,
+                     col.ind = "gray",
+                     col.var = 'blue',
+                     labelsize = 3,
+                     arrowsize = 1,
+                     alpha.var=0.15,
+                     #col.ind = kraken_merge$stage_category
+)
+
+print(g)
+
+
+
+
+# subset by phyla
+colnames(kraken_phyla) <- sub("^.*p__([^\\.]+)\\..*", "\\1", colnames(kraken_phyla))
+
+contaminant_columns <- grepl("contaminant", names(kraken_phyla), ignore.case = TRUE)
+kraken_phyla <- kraken_phyla[, !contaminant_columns]
+
+virus_columns <- grepl("^k__", names(kraken_phyla), ignore.case = TRUE)
+kraken_phyla <- kraken_phyla[,!virus_columns]
+
+# get unique phylum names
+phylas <- unique(sapply(strsplit(names(kraken_phyla), "\\."), `[`, 1))
+
+# Preparing a new dataframe to store sums
+kraken_phyla_sums <- data.frame(id = kraken_phyla[1])
+
+# Summing like-named columns across rows
+for(phylum in phylas) {
+  print(phylum)
+  pattern <- paste0("^", phylum, "\\.")
+  cols <- grep(pattern, names(kraken_phyla), value = TRUE)
+  
+  # Using apply() to sum across rows for matched columns
+  if(length(cols) > 0) {
+    row_sums <- apply(kraken_phyla[, cols,drop = FALSE], 1, sum)
+    kraken_phyla_sums[[phylum]] <- row_sums  # Storing the sums in the new dataframe
+  }
+}
+
+kraken_phyla_sums <- merge(kraken_phyla_sums,kraken_meta_filt[,c('id','stage_category')], by='id',all.x=TRUE)
+kraken_pca <- kraken_phyla_sums[ , !(names(kraken_phyla_sums) %in% c("id", "stage_category"))]
+
+kraken_pca <- scale(kraken_pca)
+
+# Run PCA
+data.pca <- prcomp(kraken_pca, center = FALSE, scale = FALSE)
+data.pca$rotation[1:10, 1:2]
+
+summary(data.pca)
+
+fviz_eig(data.pca, addlabels = TRUE)
+
+## GRAPHS OF INDIVIDUALS
+# PCA colored by cos2
+fviz_pca_ind(data.pca, geom="point",col.ind="cos2")+
+  scale_color_gradient2(low="white", mid="blue",
+                        high="red", midpoint=0.6)
+
+# Color individuals by group
+fviz_pca_ind(data.pca, label="none", 
+             col.ind = kraken_phyla_sums$stage_category)
+
+
+##GRAPHS OF VARIABLES
+#fviz_pca_var(data.pca, select.var = list(contrib = 20))
+
+
+g <- fviz_pca_biplot(data.pca,
+                     label='var', 
+                     repel = TRUE, 
+                     select.var = list(contrib = 5),
+                     alpha.ind = 0.5,
+                     col.ind = "gray",
+                     col.var = 'blue',
+                     labelsize = 3,
+                     arrowsize = 1,
+                     alpha.var=0.15,
+                     #col.ind = kraken_merge$stage_category
+)
+
+print(g)
+
+
+
