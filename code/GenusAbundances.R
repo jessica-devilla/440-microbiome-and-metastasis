@@ -1,7 +1,9 @@
-colon_metadata <- kraken_metaCOAD
+colon_metadata <- subset(kraken_metaCOAD, sample_type == "Primary Tumor")
 Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data <- kraken_COAD
 install.packages("dplyr")  # Install the dplyr package
 library(dplyr)
+
+
 
 stageI_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IA", "Stage IB","Stage I"))
 stageII_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IIA", "Stage IIB", "Stage II"))
@@ -17,156 +19,58 @@ stageIII_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
 stageIV_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
   filter(`...1` %in% stageIV_metadata$'...1')
 
-genus_names_stageI <- gsub("^.*g__([^\\.]+).*", "\\1", names(stageI_data)[-1])
-genus_names_stageI <- genus_names_stageI[!grepl("^k__", genus_names_stageI)]
-genus_names_stageI <- genus_names_stageI[!grepl("^contaminant", genus_names_stageI)]
-unique_genus_names_stageI <- unique(genus_names_stageI)
 
-
-genus_names_stageII <- gsub("^.*g__([^\\.]+).*", "\\1", names(stageI_data)[-1])
-genus_names_stageII <- genus_names_stageII[!grepl("^k__", genus_names_stageII)]
-genus_names_stageII <- genus_names_stageII[!grepl("^contaminant", genus_names_stageII)]
-unique_genus_names_stageII <- unique(genus_names_stageII)
-
-
-
-
-
-genus_names_stageIII <- gsub("^.*g__([^\\.]+).*", "\\1", names(stageI_data)[-1])
-genus_names_stageIII <- genus_names_stageI[!grepl("^k__", genus_names_stageIII)]
-genus_names_stageIII <- genus_names_stageI[!grepl("^contaminant", genus_names_stageIII)]
-unique_genus_names_stageIII <- unique(genus_names_stageIII)
-
-
-
-genus_names_stageIV <- gsub("^.*g__([^\\.]+).*", "\\1", names(stageI_data)[-1])
-genus_names_stageIV <- genus_names_stageI[!grepl("^k__", genus_names_stageIV)]
-genus_names_stageIV <- genus_names_stageI[!grepl("^contaminant", genus_names_stageIV)]
-unique_genus_names_stageIV <- unique(genus_names_stageIV)
-
-
-total_samples_stageI <- nrow(stageI_data)
-
-genus_quantity_df_stageI <- data.frame(Genus = character(), Quantity = numeric(), stringsAsFactors = FALSE)
-
-
-# Iterate over each unique genus name
-for (genus_name in unique_genus_names_stageI){
-  # Filter columns corresponding to the current genus
-  genus_columns_stageI <- grep(paste0("\\.g__",genus_name), names(stageI_data)[-1], value = TRUE, ignore.case = TRUE)
-  
-  # Calculate the total amount for the current phylum across all samples
-  total_amount_genus_stageI <- sum(stageI_data[, genus_columns_stageI])
-  
-  # Normalize the total amount by the total number of samples in Stage I
-  normalized_quantity_stageI <- total_amount_genus_stageI / total_samples_stageI
-  genus_data <- data.frame(Genus = genus_name, Quantity = normalized_quantity_stageI, stringsAsFactors = FALSE)
-  
-  
-  # Store the normalized quantity in the list under the phylum name
-  genus_quantity_df_stageI <- rbind(genus_quantity_df_stageI, genus_data)
-  
+extract_unique_genus_names <- function(stage_data) {
+  genus_names <- gsub("^.*g__([^\\.]+).*", "\\1", names(stage_data)[-1])
+  genus_names <- genus_names[!grepl("^k__", genus_names)]
+  genus_names <- genus_names[!grepl("^contaminant", genus_names)]
+  unique_genus_names <- unique(genus_names)
+  return(unique_genus_names)
 }
 
+# Extract unique genus names for each stage
+unique_genus_names_stageI <- extract_unique_genus_names(stageI_data)
+unique_genus_names_stageII <- extract_unique_genus_names(stageII_data)
+unique_genus_names_stageIII <- extract_unique_genus_names(stageIII_data)
+unique_genus_names_stageIV <- extract_unique_genus_names(stageIV_data)
 
 
 
-
-
-total_samples_stageII <- nrow(stageII_data)
-
-genus_quantity_df_stageII <- data.frame(Genus = character(), Quantity = numeric(), stringsAsFactors = FALSE)
-
-
-# Iterate over each unique genus name
-for (genus_name in unique_genus_names_stageII){
-  # Filter columns corresponding to the current genus
-  genus_columns_stageII <- grep(paste0("\\.g__",genus_name), names(stageII_data)[-1], value = TRUE, ignore.case = TRUE)
+calculate_genus_quantity <- function(stage_data, unique_genus_names, total_samples) {
+  genus_quantity_df <- data.frame(Genus = character(), Quantity = numeric(), stringsAsFactors = FALSE)
   
-  # Calculate the total amount for the current phylum across all samples
-  total_amount_genus_stageII <- sum(stageII_data[, genus_columns_stageII])
-  
-  # Normalize the total amount by the total number of samples in Stage I
-  normalized_quantity_stageII <- total_amount_genus_stageII / total_samples_stageII
-  genus_data <- data.frame(Genus = genus_name, Quantity = normalized_quantity_stageII, stringsAsFactors = FALSE)
-  
-  
-  # Store the normalized quantity in the list under the phylum name
-  genus_quantity_df_stageII <- rbind(genus_quantity_df_stageII, genus_data)
-  
-}
-
-
-
-
-total_samples_stageIII <- nrow(stageIII_data)
-
-genus_quantity_df_stageIII <- data.frame(Genus = character(), Quantity = numeric(), stringsAsFactors = FALSE)
-
-
-# Iterate over each unique genus name
-for (genus_name in unique_genus_names_stageIII){
-  # Filter columns corresponding to the current genus
-  genus_columns_stageIII <- grep(paste0("\\.g__",genus_name), names(stageIII_data)[-1], value = TRUE, ignore.case = TRUE)
-  
-  # Calculate the total amount for the current phylum across all samples
-  total_amount_genus_stageIII <- sum(stageIII_data[, genus_columns_stageIII])
-  
-  # Normalize the total amount by the total number of samples in Stage I
-  normalized_quantity_stageIII <- total_amount_genus_stageIII / total_samples_stageIII
-  genus_data <- data.frame(Genus = genus_name, Quantity = normalized_quantity_stageIII, stringsAsFactors = FALSE)
+  # Iterate over each unique genus name
+  for (genus_name in unique_genus_names) {
+    # Filter columns corresponding to the current genus
+    genus_columns <- grep(paste0("\\.g__", genus_name), names(stage_data)[-1], value = TRUE, ignore.case = TRUE)
+    
+    # Calculate the total amount for the current genus across all samples
+    total_amount_genus <- sum(stage_data[, genus_columns])
+    
+    # Normalize the total amount by the total number of samples
+    normalized_quantity <- total_amount_genus / total_samples
+    
+    # Create a data frame for the current genus
+    genus_data <- data.frame(Genus = genus_name, Quantity = normalized_quantity, stringsAsFactors = FALSE)
+    
+    # Store the normalized quantity in the data frame
+    genus_quantity_df <- rbind(genus_quantity_df, genus_data)
+  }
   
   
-  # Store the normalized quantity in the list under the phylum name
-  genus_quantity_df_stageIII <- rbind(genus_quantity_df_stageIII, genus_data)
+genus_quantity_df_stageI <- calculate_genus_quantity(stageI_data, unique_genus_names_stageI, total_samples_stageI)
+genus_quantity_df_stageII <- calculate_genus_quantity(stageII_data, unique_genus_names_stageII, total_samples_stageII)
+genus_quantity_df_stageIII <- calculate_genus_quantity(stageIII_data, unique_genus_names_stageIII, total_samples_stageIII)
+genus_quantity_df_stageIV <- calculate_genus_quantity(stageIV_data, unique_genus_names_stageIV, total_samples_stageIV)
   
-}
-
-
-
-
-
-
-
-
-
-
-total_samples_stageIV <- nrow(stageIV_data)
-
-genus_quantity_df_stageIV <- data.frame(Genus = character(), Quantity = numeric(), stringsAsFactors = FALSE)
-
-
-# Iterate over each unique genus name
-for (genus_name in unique_genus_names_stageIV){
-  # Filter columns corresponding to the current genus
-  genus_columns_stageIV <- grep(paste0("\\.g__",genus_name), names(stageIV_data)[-1], value = TRUE, ignore.case = TRUE)
-  
-  # Calculate the total amount for the current phylum across all samples
-  total_amount_genus_stageIV <- sum(stageIV_data[, genus_columns_stageIV])
-  
-  # Normalize the total amount by the total number of samples in Stage I
-  normalized_quantity_stageIV <- total_amount_genus_stageIV / total_samples_stageIV
-  genus_data <- data.frame(Genus = genus_name, Quantity = normalized_quantity_stageIV, stringsAsFactors = FALSE)
-  
-  
-  # Store the normalized quantity in the list under the phylum name
-  genus_quantity_df_stageIV <- rbind(genus_quantity_df_stageIV, genus_data)
-  
-}
-genus_quantity_df_stageIV <- genus_quantity_df_stageIV[complete.cases(genus_quantity_df_stageIV), ]
-genus_quantity_df_stageIII <- genus_quantity_df_stageIII[complete.cases(genus_quantity_df_stageIII), ]
-genus_quantity_df_stageII <- genus_quantity_df_stageII[complete.cases(genus_quantity_df_stageII), ]
+  # Filter out incomplete cases if necessary
 genus_quantity_df_stageI <- genus_quantity_df_stageI[complete.cases(genus_quantity_df_stageI), ]
-
-
-
-
-
-#PLOTTING BASED ON VARIANCE
+genus_quantity_df_stageII <- genus_quantity_df_stageII[complete.cases(genus_quantity_df_stageII), ]
+genus_quantity_df_stageIII <- genus_quantity_df_stageIII[complete.cases(genus_quantity_df_stageIII), ]
+genus_quantity_df_stageIV <- genus_quantity_df_stageIV[complete.cases(genus_quantity_df_stageIV), ]
 
 library(ggplot2)
 
-# Combine all data frames into a single data frame with a 'Stage' column
 genus_quantity_combined <- rbind(transform(genus_quantity_df_stageI, Stage = "Stage I"),
                                  transform(genus_quantity_df_stageII, Stage = "Stage II"),
                                  transform(genus_quantity_df_stageIII, Stage = "Stage III"),
@@ -180,7 +84,6 @@ variance_by_genus <- genus_quantity_combined %>%
 # Sort variances in descending order
 sorted_variances <- variance_by_genus %>%
   arrange(desc(variance))
-
 
 #PLOTTING IN TOP 50 VARIANCES
 top_50_variances_genus <- head(sorted_variances, 50)
@@ -198,111 +101,49 @@ dev.off()  # Close the PDF device
 
 
 
+filter_sort_and_plot_top_genus <- function(genus_quantity_df, sorted_variances, top_n, filename) {
+  # Get the top genus based on variance
+  top_n_variances_genus <- head(sorted_variances, top_n)
+  top_genus <- top_n_variances_genus$Genus
+  
+  # Filter data frames for each stage
+  filtered_df_stageI <- genus_quantity_df %>%
+    filter(Genus %in% top_genus)
+  
+  filtered_df_stageII <- genus_quantity_df %>%
+    filter(Genus %in% top_genus)
+  
+  filtered_df_stageIII <- genus_quantity_df %>%
+    filter(Genus %in% top_genus)
+  
+  filtered_df_stageIV <- genus_quantity_df %>%
+    filter(Genus %in% top_genus)
+  
+  # Combine filtered data frames
+  combined_df <- bind_rows(
+    mutate(filtered_df_stageI, Stage = "Stage I"),
+    mutate(filtered_df_stageII, Stage = "Stage II"),
+    mutate(filtered_df_stageIII, Stage = "Stage III"),
+    mutate(filtered_df_stageIV, Stage = "Stage IV")
+  )
+  
+  # Plot
+  genus_abundance_plot <- ggplot(combined_df, aes(x = factor(Genus, levels = top_genus), y = Quantity, fill = Stage)) +
+    geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+    labs(title = paste("Values of Top", top_n, "Genus' with Highest Variances across Stages"),
+         x = "Genus", y = "Total Abundance/Stage Size") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("Stage I" = "blue", "Stage II" = "red", "Stage III" = "green", "Stage IV" = "purple"))
+  
+  # Save plot to PDF
+  pdf(filename)
+  print(genus_abundance_plot)
+  dev.off()  # Close the PDF device
+}
 
 
-
-top_50_genus <- top_50_variances_genus$Genus
-
-filtered_df_stageI <- genus_quantity_df_stageI %>%
-  filter(Genus %in% top_50_genus)
-
-filtered_df_stageII <- genus_quantity_df_stageII %>%
-  filter(Genus %in% top_50_genus)
-
-filtered_df_stageIII <- genus_quantity_df_stageIII %>%
-  filter(Genus %in% top_50_genus)
-
-filtered_df_stageIV <- genus_quantity_df_stageIV %>%
-  filter(Genus %in% top_50_genus)
-
-# Combine filtered data frames
-combined_top50vargenus <- bind_rows(
-  mutate(filtered_df_stageI, Stage = "Stage I"),
-  mutate(filtered_df_stageII, Stage = "Stage II"),
-  mutate(filtered_df_stageIII, Stage = "Stage III"),
-  mutate(filtered_df_stageIV, Stage = "Stage IV")
-)
-
-
-genusabudance_top50variance <- ggplot(combined_top50vargenus, aes(x = factor(Genus,levels = top_50_variances_genus$Genus), y = Quantity, fill = Stage)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  labs(title = "Values of Top 50 Genus' with Highest Variances across Stages",
-       x = "Genus", y = "Total Abundance/Stage Size") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_fill_manual(values = c("Stage I" = "blue", "Stage II" = "red", "Stage III" = "green", "Stage IV" = "purple"))
-
-
-pdf("genus_top50var_final.pdf")
-print(genusabudance_top50variance)
-dev.off()  # Close the PDF device
-
-
-
-
-#PLOTTING TOP 25 VARIANCE
-top_25_variances_genus <- head(sorted_variances, 25)
-
-top_25_genus <- top_25_variances_genus$Genus
-
-filteredTOP25_df_stageI <- genus_quantity_df_stageI %>%
-  filter(Genus %in% top_25_genus)
-
-filteredTOP25_df_stageII <- genus_quantity_df_stageII %>%
-  filter(Genus %in% top_25_genus)
-
-filteredTOP25_df_stageIII <- genus_quantity_df_stageIII %>%
-  filter(Genus %in% top_25_genus)
-
-filteredTOP25_df_stageIV <- genus_quantity_df_stageIV %>%
-  filter(Genus %in% top_25_genus)
-
-# Combine filtered data frames
-combined_top25vargenus <- bind_rows(
-  mutate(filteredTOP25_df_stageI, Stage = "Stage I"),
-  mutate(filteredTOP25_df_stageII, Stage = "Stage II"),
-  mutate(filteredTOP25_df_stageIII, Stage = "Stage III"),
-  mutate(filteredTOP25_df_stageIV, Stage = "Stage IV")
-)
-
-
-genusabudance_top25variance <- ggplot(combined_top25vargenus, aes(x = factor(Genus,levels = top_25_variances_genus$Genus), y = Quantity, fill = Stage)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  labs(title = "Values of Top 25 Genus' with Highest Variances across Stages",
-       x = "Genus", y = "Total Abundance/Stage Size") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_fill_manual(values = c("Stage I" = "blue", "Stage II" = "red", "Stage III" = "green", "Stage IV" = "purple"))
-
-
-pdf("genus_top25var_final.pdf")
-print(genusabudance_top25variance)
-dev.off()  # Close the PDF device
-# Plot the values for each stage
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+filter_sort_and_plot_top_genus(genus_quantity_df_stageI, sorted_variances, 50, "genus_top50var_final.pdf")
+filter_sort_and_plot_top_genus(genus_quantity_df_stageI, sorted_variances, 25, "genus_top25var_final.pdf")
 
 
 #PLOT ON TOTAL GENUS ABUNDANCES - HARD TO READ BECAUSE SO MANY LABELS
@@ -320,45 +161,6 @@ combined_plot <- combined_plot + scale_x_discrete(labels = function(x) ifelse(se
 pdf("genus_abundances_final.pdf")
 print(combined_plot)
 dev.off()  # Close the PDF device
-
-
-
-
-
-
-
-
-#PLOT ON GENUS DIFFERENCE BETWEEN STAGES - PLOTTED TOP 50 
-genus_difference <- genus_quantity_combined %>%
-  group_by(Genus) %>%
-  summarize(Difference = max(Quantity) - min(Quantity)) %>%
-  arrange(desc(Difference))
-
-# Select the top 100 genera with the largest difference
-top_50_genus_diff <- head(genus_difference$Genus, 50)
-
-# Filter the dataframe to include only the top 100 genera
-top_50_genus_diff_data <- genus_quantity_combined %>%
-  filter(Genus %in% top_50_genus_diff)
-
-# Plot the data for the top 100 genera
-top_50_plot_genus_diff <- ggplot(top_50_genus_diff_data, aes(x = Genus, y = Quantity, fill = Stage)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  labs(title = "Top 50 Genus Abundances with Largest Differences Between Strains",
-       x = "Genus", y = "Total Abundance/Stage Size") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_fill_manual(values = c("Stage I" = "blue", "Stage II" = "red", "Stage III" = "green", "Stage IV" = "purple"))
-
-# Save the plot to a PDF file
-pdf("top_50_genus_abundances_differences.pdf")
-print(top_50_plot_genus_diff)
-dev.off()  # Close the PDF device
-
-#possibly wilcox test#
-#better way to differentiate between the changes in genus then just differences#
-#maybe look at the change between stage 2 and stage 3, then stage 3 and stage 4#
-#track the pattern of certain strains across stages and see if this is consistent across all cells#
-
 
 
 
