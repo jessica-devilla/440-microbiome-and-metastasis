@@ -160,6 +160,7 @@ genus_quantity_df_stageI <- genus_quantity_df_stageI[complete.cases(genus_quanti
 
 
 
+
 library(ggplot2)
 
 # Combine all data frames into a single data frame with a 'Stage' column
