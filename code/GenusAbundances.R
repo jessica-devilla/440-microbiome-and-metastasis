@@ -1,5 +1,5 @@
 colon_metadata <- kraken_metaCOAD
-Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data <- kraken_df
+Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data <- kraken_COAD
 install.packages("dplyr")  # Install the dplyr package
 library(dplyr)
 
@@ -185,6 +185,22 @@ sorted_variances <- variance_by_genus %>%
 #PLOTTING IN TOP 50 VARIANCES
 top_50_variances_genus <- head(sorted_variances, 50)
 
+genus_variances_50 <- ggplot(top_50_variances_genus, aes(x = reorder(Genus, -variance), y = variance)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Top 50 Genus' with Highest Variances",
+       x = "Genus",
+       y = "Variance") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+pdf("genusvarianceplot.pdf")
+print(genus_variances_50)
+dev.off()  # Close the PDF device
+# Plot the values for each stage
+
+
+
+
+
+
 top_50_genus <- top_50_variances_genus$Genus
 
 filtered_df_stageI <- genus_quantity_df_stageI %>%
@@ -219,7 +235,6 @@ genusabudance_top50variance <- ggplot(combined_top50vargenus, aes(x = factor(Gen
 pdf("genus_top50var_final.pdf")
 print(genusabudance_top50variance)
 dev.off()  # Close the PDF device
-# Plot the values for each stage
 
 
 
