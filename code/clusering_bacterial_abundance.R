@@ -46,7 +46,8 @@ heatmap <- Heatmap(kraken_clust,
         row_title="ids", column_title = "Bacterial Genuses"
 )
 draw(heatmap)
-ggsave(path = "figures", filename = "genus_heatmap.png", bg='white')
+save(heatmap, file = "figures/genus_heatmap.png")
+#ggsave(path = "figures", filename = "genus_heatmap.png", bg='white')
 
 
 # identify outliers
