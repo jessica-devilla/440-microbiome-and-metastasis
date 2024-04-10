@@ -63,14 +63,14 @@ total_abund$lower <- total_abund$mean_val - total_abund$std
 
 
 # Plot the sum of values for each stage category as a bar graph
-ggplot(total_abund, aes(x = stage_category, y = mean_val, fill = stage_category)) +
+p <- ggplot(total_abund, aes(x = stage_category, y = mean_val, fill = stage_category)) +
   geom_bar(stat = "identity") +
   geom_errorbar(data = total_abund, aes(x = stage_category, ymin = lower, ymax = upper), width = 0.2, color = "black") +
   labs(x = "Stage Category", y = "Total Bacterial Abundance") +
   theme_minimal() + ylim(0,5000)+
   theme(legend.position = "none")
+print(p)
 ggsave(path = "figures", filename = "total_bacterial_abundance_hist.png", bg='white')
-
 
 
 p <- ggplot() +
@@ -83,6 +83,9 @@ p <- ggplot() +
 
 print(p)
 ggsave(path = "figures", filename = "total_bacterial_abundance_jitter.png", bg='white')
+
+ld <- layer_data(last_plot())
+(head(ld))
 
 # Calculate significance
 # Create a vector to store p-values
