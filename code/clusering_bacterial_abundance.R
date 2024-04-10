@@ -72,7 +72,6 @@ dend_obj <- as.hclust(dend)
 plot(dend)
 
 
-
 num_clusters <- 4
 cluster_assignments <- cutree(hclust_res, k = num_clusters)
 plot(color_branches(dend_obj, k = num_clusters))
