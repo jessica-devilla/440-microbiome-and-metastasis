@@ -132,10 +132,12 @@ filter_sort_and_plot_top_genus <- function(genus_quantity_df, sorted_variances, 
   # Plot
   genus_abundance_plot <- ggplot(combined_df, aes(x = factor(Genus, levels = top_genus), y = Quantity, fill = Stage)) +
     geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-    labs(title = paste("Values of Top", top_n, "Genus' with Highest Variances across Stages"),
-         x = "Genus", y = "Total Abundance/Stage Size") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    scale_fill_manual(values = c("Stage I" = "blue", "Stage II" = "red", "Stage III" = "green", "Stage IV" = "purple"))
+    labs(
+         x = "Genus", y = "Mean Abundance") +
+    theme_minimal() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          ) +
+    scale_fill_manual(values = c("Stage I" = "#E76BF3", "Stage II" = "#00B0F6", "Stage III" = "#00BF7D", "Stage IV" = "#A3A500"))
   # Save plot to PDF
   pdf(filename)
   print(genus_abundance_plot)
@@ -144,7 +146,7 @@ filter_sort_and_plot_top_genus <- function(genus_quantity_df, sorted_variances, 
 
 
 
-filter_sort_and_plot_top_genus(genus_quantity_combined, sorted_variances, 5, "genus_top5var_final.pdf")
+filter_sort_and_plot_top_genus(genus_quantity_combined, sorted_variances, 10, "genus_top10var_final.pdf")
 
 
 
@@ -168,7 +170,10 @@ genus_variances_50 <- ggplot(top_50_variances_genus, aes(x = reorder(Genus, -var
   labs(title = "Top 50 Genus' with Highest Variances",
        x = "Genus",
        y = "Variance") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank())
 pdf("genusvarianceplot.pdf")
 print(genus_variances_50)
 dev.off()  # Close the PDF device
@@ -182,7 +187,7 @@ dev.off()  # Close the PDF device
 #PLOT ON TOTAL GENUS ABUNDANCES - HARD TO READ BECAUSE SO MANY LABELS
 combined_plot <- ggplot(genus_quantity_combined, aes(x = Genus, y = Quantity, fill = Stage)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  labs(title = "Average Genus Abundances in a Tumor Microbiome of Colorectal Cancer Across Stages", x = "Genus", y = "Total Abundance/Stage Size") +
+  labs(title = "", x = "Genus", y = "Total Abundance/Stage Size") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_fill_manual(values = c("Stage I" = "blue", "Stage II" = "red", "Stage III" = "green", "Stage IV" = "purple"))
 combined_plot <- combined_plot + theme(axis.text.x = element_text(size = 5))

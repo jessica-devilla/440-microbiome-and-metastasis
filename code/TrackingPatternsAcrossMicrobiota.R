@@ -38,6 +38,7 @@ create_genus_boxplot <- function(data, genus_column, genus_name, filename) {
     labs(title = paste("Abundance of", genus_name, "Across Stages"),
          x = "Stage",
          y = paste("Abundance of", genus_name)) +
+    theme_minimal() + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
   # Save plot to PDF
