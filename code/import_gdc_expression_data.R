@@ -89,23 +89,31 @@ information.clinical <- GDCquery_clinic(project = "TCGA-COAD",type = "clinical")
 samples.stage.i <-se$barcode[se$ajcc_pathologic_stage=='Stage I']
 samples.stage.iv <-se$barcode[se$ajcc_pathologic_stage=='Stage IV']
 
+##remove nans
+samples.stage.i <- samples.stage.i[!is.na(samples.stage.i)]
+samples.stage.iv <- samples.stage.iv[!is.na(samples.stage.iv)]
+
+
 dataPrep <- TCGAanalyze_Preprocessing(
   object = se, 
   cor.cut = 0.6
 )   
 print(dataPrep)
 
+# takes a few minutes
 dataNorm <- TCGAanalyze_Normalization(
   tabDF = dataPrep,
   geneInfo = geneInfoHT,
   method = "gcContent"
-)  
+)
+saveRDS(dataNorm, file = "data/gdc_TCGA_norm.RDS")
 
 dataFilt <- TCGAanalyze_Filtering(
   tabDF = dataNorm,
   method = "quantile", 
   qnt.cut =  0.25
 )   
+
 
 dataDEGs <- TCGAanalyze_DEA(
   mat1 = dataFilt[,samples.stage.i],
@@ -117,6 +125,7 @@ dataDEGs <- TCGAanalyze_DEA(
   method = "glmLRT",
   pipeline = "edgeR"
 )
+saveRDS(dataDEGs, file = "data/gdc_TCGA_stagei_vs_stageiv_DEGs.RDS")
 
 ansEA <- TCGAanalyze_EAcomplete(
   TFname = "DEA genes Stage I Vs Stage IV",
