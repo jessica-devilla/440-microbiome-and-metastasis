@@ -108,6 +108,7 @@ dataNorm <- TCGAanalyze_Normalization(
 )
 saveRDS(dataNorm, file = "data/gdc_TCGA_norm.RDS")
 
+
 dataFilt <- TCGAanalyze_Filtering(
   tabDF = dataNorm,
   method = "quantile", 
@@ -126,6 +127,7 @@ dataDEGs <- TCGAanalyze_DEA(
   pipeline = "edgeR"
 )
 saveRDS(dataDEGs, file = "data/gdc_TCGA_stagei_vs_stageiv_DEGs.RDS")
+dataDEGs <- readRDS(file = "data/gdc_TCGA_stagei_vs_stageiv_DEGs.RDS")
 
 ansEA <- TCGAanalyze_EAcomplete(
   TFname = "DEA genes Stage I Vs Stage IV",
