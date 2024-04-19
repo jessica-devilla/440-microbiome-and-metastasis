@@ -62,6 +62,25 @@ kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage III([A-C])?", "Stag
 kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage II([A-C])?", "Stage II", kraken_metaCOAD_RNASeq$pathologic_stage_label)
 kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage I([A-C])?", "Stage I", kraken_metaCOAD_RNASeq$pathologic_stage_label)
 kraken_metaRNA_clean <- subset(kraken_metaCOAD_RNASeq, select = -c(...1))
+
+stageI_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IA", "Stage IB","Stage I"))
+stageII_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IIA", "Stage IIB", "Stage II"))
+stageIII_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IIIA", "Stage IIIB", "Stage III"))
+stageIV_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IVA", "Stage IVB", "Stage IV"))
+
+stageI_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
+  filter(`...1` %in% stageI_metadata$'...1')
+stageII_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
+  filter(`...1` %in% stageII_metadata$'...1')
+stageIII_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
+  filter(`...1` %in% stageIII_metadata$'...1')
+stageIV_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
+  filter(`...1` %in% stageIV_metadata$'...1')
+
+
+
+
+
 #Filter for IlluminaGA
 kraken_metaCOAD_RNASeq_IlluminaGA <- subset(kraken_metaCOAD_RNASeq, platform == "Illumina GA")
 kraken_COADdata_RNASeq_IlluminaGA <- kraken_COADdata_RNASeq %>%
