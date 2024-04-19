@@ -49,6 +49,12 @@ kraken_metaCOAD <- subset(kraken_metadata_df, disease_type == "Colon Adenocarcin
 ids <- kraken_metaCOAD[,1]
 kraken_COAD <- kraken_df[kraken_df[,1] %in% ids,]
 
+# import the R files
+kraken_COAD <- readRDS('data/kraken_COAD.RDS')
+kraken_metaCOAD  <- readRDS('data/kraken_metaCOAD.RDS')
+
+
+
 #Clean Dataframe for only RNA-Seq + Primary Tumor
 kraken_metaCOAD_RNASeq <- subset(kraken_metaCOAD, sample_type == "Primary Tumor" & experimental_strategy == 'RNA-Seq' & pathologic_stage_label != "Not available")
 row.names(kraken_metaCOAD_RNASeq) <- kraken_metaCOAD_RNASeq$...1
@@ -76,7 +82,9 @@ kraken_COADRNA_Illumina_UNC_clean <- subset(kraken_COADdata_RNASeq_IlluminaGA_UN
 kraken_metaCOADRNA_Illumina_UNC_clean <- subset(kraken_metaCOAD_RNASeq_IlluminaGA_UNC, select = -c(...1))
 
 #Filtering/Importing Non-Normalized Data
-kraken_orig_otu <- Kraken_TCGA_Raw_Data_17625_Samples
+
+
+kraken_orig_otu <- read_csv('data/Metadata-TCGA-Kraken-17625-Samples.csv',show_col_types = FALSE)
 kraken_orig_otu_df <- as.data.frame(kraken_orig_otu)
 kraken_raw_COADRNA_IlluminaGA_UNC <- kraken_orig_otu_df %>%
   filter(...1 %in% kraken_metaCOAD_RNASeq_IlluminaGA_UNC$...1)
