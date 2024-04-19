@@ -43,42 +43,30 @@ saveRDS(kraken_df, file = "data/kraken_df.RDS")
 saveRDS(kraken_df, file = "data/kraken_metadatadf.RDS")
 
 # Subset the dataframe to get only values from COAD patients
-kraken_metaCOAD <- subset(kraken_metadata_df, disease_type == "Colon Adenocarcinoma")
+kraken_metaCOAD <- subset(kraken_metadata_df, disease_type == "Colon Adenocarcinoma" & sample_type =='Primary Tumor' & pathologic_stage_label != "Not available")
 #dim(kraken_metaCOAD)
 #get the patient ids from COAD metadata
 ids <- kraken_metaCOAD[,1]
 kraken_COAD <- kraken_df[kraken_df[,1] %in% ids,]
 
-#Clean Dataframe for only RNA-Seq + Primary Tumor
-kraken_metaCOAD_RNASeq <- subset(kraken_metaCOAD, sample_type == "Primary Tumor" & experimental_strategy == 'RNA-Seq' & pathologic_stage_label != "Not available")
+#Group Stages Together
+kraken_metaCOAD$pathologic_stage_label <- gsub("Stage IV([A-C])?", "Stage IV", kraken_metaCOAD$pathologic_stage_label)
+kraken_metaCOAD$pathologic_stage_label <- gsub("Stage III([A-C])?", "Stage III", kraken_metaCOAD$pathologic_stage_label)
+kraken_metaCOAD$pathologic_stage_label <- gsub("Stage II([A-C])?", "Stage II", kraken_metaCOAD$pathologic_stage_label)
+kraken_metaCOAD$pathologic_stage_label <- gsub("Stage I([A-C])?", "Stage I", kraken_metaCOAD$pathologic_stage_label)
+
+#Filter Taxonomy Unit into Genus Labels
+kraken_COAD_genus <- kraken_COAD
+colnames(kraken_COAD_genus) <- sub(".*__(.*)$", "\\1", colnames(kraken_COAD_genus))
+
+#Clean Dataframe for only RNA-Seq
+kraken_metaCOAD_RNASeq <- subset(kraken_metaCOAD, experimental_strategy == 'RNA-Seq')
 row.names(kraken_metaCOAD_RNASeq) <- kraken_metaCOAD_RNASeq$...1
 kraken_COADdata_RNASeq <- kraken_COAD %>%
   filter(...1 %in% kraken_metaCOAD_RNASeq$...1)
 row.names(kraken_COADdata_RNASeq) <- kraken_COADdata_RNASeq$...1
 kraken_COADRNA_clean <- subset(kraken_COADdata_RNASeq, select = -c(...1))
-#Clean Stage Labels
-kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage IV([A-C])?", "Stage IV", kraken_metaCOAD_RNASeq$pathologic_stage_label)
-kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage III([A-C])?", "Stage III", kraken_metaCOAD_RNASeq$pathologic_stage_label)
-kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage II([A-C])?", "Stage II", kraken_metaCOAD_RNASeq$pathologic_stage_label)
-kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage I([A-C])?", "Stage I", kraken_metaCOAD_RNASeq$pathologic_stage_label)
 kraken_metaRNA_clean <- subset(kraken_metaCOAD_RNASeq, select = -c(...1))
-
-stageI_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IA", "Stage IB","Stage I"))
-stageII_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IIA", "Stage IIB", "Stage II"))
-stageIII_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IIIA", "Stage IIIB", "Stage III"))
-stageIV_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IVA", "Stage IVB", "Stage IV"))
-
-stageI_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
-  filter(`...1` %in% stageI_metadata$'...1')
-stageII_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
-  filter(`...1` %in% stageII_metadata$'...1')
-stageIII_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
-  filter(`...1` %in% stageIII_metadata$'...1')
-stageIV_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
-  filter(`...1` %in% stageIV_metadata$'...1')
-
-
-
 
 
 #Filter for IlluminaGA
@@ -87,6 +75,7 @@ kraken_COADdata_RNASeq_IlluminaGA <- kraken_COADdata_RNASeq %>%
   filter(row.names(.) %in% row.names(kraken_metaCOAD_RNASeq_IlluminaGA))
 kraken_COADRNA_Illumina_clean <- subset(kraken_COADdata_RNASeq_IlluminaGA, select = -c(...1))
 kraken_metaCOADRNA_Illumina_clean <- subset(kraken_metaCOAD_RNASeq_IlluminaGA, select = -c(...1))
+
 #Filter for UNC
 kraken_metaCOAD_RNASeq_IlluminaGA_UNC <- subset(kraken_metaCOAD_RNASeq_IlluminaGA, data_submitting_center_label == "University of North Carolina")
 kraken_COADdata_RNASeq_IlluminaGA_UNC <- kraken_COADdata_RNASeq_IlluminaGA %>%
