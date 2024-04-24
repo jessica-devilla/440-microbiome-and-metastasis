@@ -69,7 +69,6 @@ kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage II([A-C])?", "Stage
 kraken_metaCOAD_RNASeq$pathologic_stage_label <- gsub("Stage I([A-C])?", "Stage I", kraken_metaCOAD_RNASeq$pathologic_stage_label)
 kraken_metaRNA_clean <- subset(kraken_metaCOAD_RNASeq, select = -c(...1))
 #Filter for IlluminaGA
-kraken_metaCOAD_RNASeq_IlluminaGA <- subset(kraken_metaCOAD_RNASeq, platform == "Illumina GA")
 kraken_COADdata_RNASeq_IlluminaGA <- kraken_COADdata_RNASeq %>%
   filter(row.names(.) %in% row.names(kraken_metaCOAD_RNASeq_IlluminaGA))
 kraken_COADRNA_Illumina_clean <- subset(kraken_COADdata_RNASeq_IlluminaGA, select = -c(...1))
@@ -78,13 +77,18 @@ kraken_metaCOADRNA_Illumina_clean <- subset(kraken_metaCOAD_RNASeq_IlluminaGA, s
 kraken_metaCOAD_RNASeq_IlluminaGA_UNC <- subset(kraken_metaCOAD_RNASeq_IlluminaGA, data_submitting_center_label == "University of North Carolina")
 kraken_COADdata_RNASeq_IlluminaGA_UNC <- kraken_COADdata_RNASeq_IlluminaGA %>%
   filter(row.names(.) %in% row.names(kraken_metaCOAD_RNASeq_IlluminaGA_UNC))
+
+
+
 kraken_COADRNA_Illumina_UNC_clean <- subset(kraken_COADdata_RNASeq_IlluminaGA_UNC, select = -c(...1))
 kraken_metaCOADRNA_Illumina_UNC_clean <- subset(kraken_metaCOAD_RNASeq_IlluminaGA_UNC, select = -c(...1))
 
+saveRDS(kraken_COADRNA_Illumina_UNC_clean , file = "data/kraken_norm_filtered.RDS")
+saveRDS(kraken_metaCOADRNA_Illumina_UNC_clean , file = "data/kraken_meta_norm_filtered.RDS")
+
 #Filtering/Importing Non-Normalized Data
 
-
-kraken_orig_otu <- read_csv('data/Metadata-TCGA-Kraken-17625-Samples.csv',show_col_types = FALSE)
+kraken_orig_otu <- read_csv('data/Kraken-TCGA-Raw-Data-17625-Samples.csv',show_col_types = FALSE)
 kraken_orig_otu_df <- as.data.frame(kraken_orig_otu)
 kraken_raw_COADRNA_IlluminaGA_UNC <- kraken_orig_otu_df %>%
   filter(...1 %in% kraken_metaCOAD_RNASeq_IlluminaGA_UNC$...1)
@@ -92,8 +96,7 @@ row.names(kraken_raw_COADRNA_IlluminaGA_UNC) <- kraken_raw_COADRNA_IlluminaGA_UN
 kraken_raw_COADRNA_IlluminaGA_UNC_clean <- subset(kraken_raw_COADRNA_IlluminaGA_UNC, select = -c(...1))
 
 
-
-
+saveRDS(kraken_raw_COADRNA_IlluminaGA_UNC_clean , file = "data/kraken_raw_filtered.RDS")
 
 
 
