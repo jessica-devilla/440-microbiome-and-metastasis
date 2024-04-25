@@ -1,23 +1,3 @@
-colon_metadata <- subset(kraken_metaCOAD, sample_type == "Primary Tumor")
-Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data <- kraken_COAD
-install.packages("dplyr")  # Install the dplyr package
-library(dplyr)
-
-stageI_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IA", "Stage IB","Stage I"))
-stageII_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IIA", "Stage IIB", "Stage II"))
-stageIII_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IIIA", "Stage IIIB", "Stage III"))
-stageIV_metadata <- subset(colon_metadata, pathologic_stage_label %in% c("Stage IVA", "Stage IVB", "Stage IV"))
-
-stageI_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
-  filter(`...1` %in% stageI_metadata$'...1')
-stageII_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
-  filter(`...1` %in% stageII_metadata$'...1')
-stageIII_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
-  filter(`...1` %in% stageIII_metadata$'...1')
-stageIV_data <- Kraken_TCGA_Voom_SNM_Plate_Center_Filtering_Data %>%
-  filter(`...1` %in% stageIV_metadata$'...1')
-
-
 extract_unique_genus_names <- function(stage_data) {
   genus_names <- gsub("^.*g__([^\\.]+).*", "\\1", names(stage_data)[-1])
   genus_names <- genus_names[!grepl("^k__", genus_names)]
