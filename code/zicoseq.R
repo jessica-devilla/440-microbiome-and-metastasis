@@ -1,34 +1,60 @@
-install.packages("GUniFrac")
+#install.packages("GUniFrac")
+
 library(GUniFrac)
 library(dplyr)
 
+rm(list = ls(all.names = TRUE))
 
-#DataCleaning
-kraken_metaCOAD_subset <- subset(kraken_metaCOAD, sample_type == "Primary Tumor" & pathologic_stage_label != "Not available")
+remove_viruses <- function(df) {
+  contaminant_columns <- grepl("^k__Viruses", names(df), ignore.case = TRUE)
+  df <- df[, !contaminant_columns]
+  return(df)
+}
+
+####  load data
+kraken_meta <- readRDS("data/kraken_meta_norm_filtered.RDS")
+#kraken_subset <- readRDS("data/kraken_norm_filtered.RDS")
+kraken_data <- readRDS("data/kraken_raw_filtered.RDS")
 
 
+# Subset the dataframe to exclude contaminant columns
+contaminant_columns <- grepl("contaminant", names(kraken_data), ignore.case = TRUE)
+kraken_data <- kraken_data[, !contaminant_columns]
+# exclude viruses
+kraken_data <- remove_viruses(kraken_data)
 
-kraken_metaCOAD_subset <- kraken_metaCOAD_subset[, c("...1", "pathologic_stage_label")]
-kraken_COAD_subset <- kraken_COAD %>%
-  filter(...1 %in% kraken_metaCOAD_subset$...1)
-
-row.names(kraken_COAD_subset) <- kraken_COAD_subset$...1
-kraken_COAD_subset$...1 <- NULL
+#subset dataframes for comparison
+kraken_meta_sub <- kraken_meta[kraken_meta$pathologic_stage_label %in% c("Stage I", "Stage IV"), ]
+kraken_subset <- kraken_data[rownames(kraken_data) %in% rownames(kraken_meta_sub), ]
 
 
+# examine dataset
+kraken_mat <- as.matrix(kraken-subset)
+zero_count <- sum(kraken_subset == 0) 
+print(kraken_subset[kraken_subset==0])
+nan_count <- sum(is.nan(kraken_mat))
+print(kraken_subset[is.nan(kraken_mat)])
 
-kraken_metaCOAD_subset$pathologic_stage_label <- gsub("Stage IV([A-C])?", "Stage IV", kraken_metaCOAD_subset$pathologic_stage_label)
-kraken_metaCOAD_subset$pathologic_stage_label <- gsub("Stage III([A-C])?", "Stage III", kraken_metaCOAD_subset$pathologic_stage_label)
-kraken_metaCOAD_subset$pathologic_stage_label <- gsub("Stage II([A-C])?", "Stage II", kraken_metaCOAD_subset$pathologic_stage_label)
-kraken_metaCOAD_subset$pathologic_stage_label <- gsub("Stage I([A-C])?", "Stage I", kraken_metaCOAD_subset$pathologic_stage_label)
-row.names(kraken_metaCOAD_subset) <- kraken_metaCOAD_subset$...1
-kraken_metaCOAD_subset$...1 <- NULL
+#remove columns containing all zeroes from dataframe
+kraken_subset <- kraken_subset[, colSums(kraken_subset != 0) > 0]
 
-zicoseq_data <- t(kraken_COAD_subset)
-zico_test_1 <- ZicoSeq(meta.dat = kraken_metaCOAD_subset,  feature.dat = zicoseq_data, grp.name = 'pathologic_stage_label', adj.name = NULL, feature.dat.type = 'other', prev.filter = 0, mean.abund.filter = 0,  max.abund.filter = 0.002, min.prop = 0, 
+
+data(throat.otu.tab)
+data(throat.meta)
+comm <- t(throat.otu.tab)
+meta.dat <- throat.meta
+meta.dat
+
+
+zicoseq_data <- t(kraken_subset)
+row_names <- 1:nrow(zicoseq_data)
+rownames(zicoseq_data) <- row_names
+
+zicoObj <- ZicoSeq(meta.dat = kraken_meta_sub,  feature.dat = zicoseq_data, grp.name = 'pathologic_stage_label', 
+                       adj.name = NULL, feature.dat.type = 'other', prev.filter = 0, mean.abund.filter = 0,  max.abund.filter = 0, min.prop = 0, 
                        # Winsorization to replace outliers
                        is.winsor = TRUE, outlier.pct = 0.03, winsor.end = 'top',
-                       # Posterior sampling to impute zeros
+                       # Posterior sampling 
                        is.post.sample = TRUE, post.sample.no = 25, 
                        # Use the square-root transformation
                        link.func = list(function (x) x^0.5), stats.combine.func = max,
@@ -39,3 +65,6 @@ zico_test_1 <- ZicoSeq(meta.dat = kraken_metaCOAD_subset,  feature.dat = zicoseq
                        # Family-wise error rate control
                        is.fwer = FALSE,
                        verbose = TRUE, return.feature.dat = TRUE)
+
+ZicoSeq.plot(zicoObj, pvalue.type = 'p.adj.fdr', cutoff = 0.1, text.size = 10,
+             out.dir = NULL, width = 10, height = 6)
