@@ -7,8 +7,6 @@ contaminant_columns <- grepl("contaminant", names(kraken_merge_RNAIlluminaUNC), 
 
 # Subset the dataframe to exclude contaminant columns
 kraken_merge_RNAIlluminaUNC <- kraken_merge_RNAIlluminaUNC[, !contaminant_columns]
-
-
 contaminant_columns <- grepl("contaminant", names(kraken_merge_RNAIlluminaUNC), ignore.case = TRUE)
 
 
