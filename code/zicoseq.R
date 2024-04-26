@@ -8,24 +8,24 @@ library(dplyr)
 rm(list = ls(all.names = TRUE))
 
 remove_viruses <- function(df) {
-  contaminant_columns <- grepl("^k__Viruses", names(df), ignore.case = TRUE)
-  df <- df[, !contaminant_columns]
+  virus_columns <- grepl("^k__Viruses", names(df), ignore.case = TRUE)
+  df <- df[, !virus_columns]
   return(df)
 }
 
-
-run_zicoseq <- function(){
-  ####  load data
-  kraken_meta <- readRDS("data/kraken_meta_norm_filtered.RDS")
-  kraken_data<- readRDS("data/kraken_norm_filtered.RDS")
-  #kraken_data <- readRDS("data/kraken_raw_filtered.RDS")
-  
-  
+remove_contaminants <- function(df){
   # Subset the dataframe to exclude contaminant columns
   contaminant_columns <- grepl("contaminant", names(kraken_data), ignore.case = TRUE)
   kraken_data <- kraken_data[, !contaminant_columns]
+  
+}
+
+
+run_zicoseq <- function(kraken_data, kraken_meta){
+  
   # exclude viruses
   kraken_data <- remove_viruses(kraken_data)
+  kraken_data <- remove_contaminants(kraken_data)
   
   #subset dataframes for comparison
   kraken_meta_sub <- kraken_meta[kraken_meta$pathologic_stage_label %in% c("Stage I", "Stage IV"), ]
@@ -70,7 +70,11 @@ run_zicoseq <- function(){
   
 }
 
-result <- run_zicoseq()
+
+kraken_meta <- readRDS("data/kraken_meta_norm_filtered.RDS")
+kraken_data<- readRDS("data/kraken_norm_filtered.RDS")
+result <- run_zicoseq(kraken_data, kraken_meta)
+
 zicoObj <- result$zicoObj
 zicoseq_data <- result$zicoseq_data
 
