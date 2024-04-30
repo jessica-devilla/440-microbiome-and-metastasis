@@ -8,6 +8,8 @@ BiocManager::install("phyloseq")
 BiocManager::install("mia")
 #https://microbiome.github.io/mia/articles/mia.html
 
+BiocManager::install("microbiome")
+
 
 suppressPackageStartupMessages({
   library(readr)
@@ -17,6 +19,7 @@ suppressPackageStartupMessages({
   library(mia)
   library(scater)
   library(umap)
+  library(microbiome)
 })
 
 rm(list = ls(all.names = TRUE))
@@ -35,7 +38,8 @@ remove_contaminants <- function(df){
 }
 
 kraken_meta <- readRDS("data/kraken_meta_norm_filtered.RDS")
-kraken_data<- readRDS("data/kraken_norm_filtered.RDS")
+#kraken_data<- readRDS("data/kraken_norm_filtered.RDS")
+kraken_data <-readRDS("data/kraken_raw_filtered.RDS")
 
 kraken_data <- remove_viruses(kraken_data)
 kraken_data <- remove_contaminants(kraken_data)
@@ -90,8 +94,39 @@ physeq
 plot_bar(physeq, x="pathologic_stage_label", fill="Phylum")
 
 # NOTE - CANNOT CALCULATE ALPHA DIVERISTY WITHOUT RAW COUNTS
-estimate_richness(physeq, split = TRUE, measures = c("Shannon")) #split=true calculates per sample
-plot_richness(physeq, x="pathologic_stage_label", measures=c("Chao1", "Shannon"))
+alpha_div <- estimate_richness(physeq, split = TRUE, measures = c("Shannon")) #split=true calculates per sample
+p <- plot_richness(physeq, x="pathologic_stage_label", color="pathologic_stage_label",measures=c( "Shannon"))+
+  labs(x = "Pathologic Stage", y = "Shannon Diversity") +
+  theme(legend.position = "none")
+print(p)
+ggsave("figures/phyloseq_shannon_raw_filt.png", plot = p)
+
+# Calculate means and standard deviations of Shannon diversity for each pathologic stage level
+mean_sd_alpha_div <- aggregate(alpha_div, by = list(pathologic_stage_label = sample_data(physeq)$pathologic_stage_label), 
+                               FUN = function(x) c(mean = mean(x), sd = sd(x)))
+
+
+# Calculate upper and lower limits for error bars
+mean_sd_alpha_div$upper <- mean_sd_alpha_div$Shannon[,"mean"] + mean_sd_alpha_div$Shannon[,"sd"]
+mean_sd_alpha_div$lower <- mean_sd_alpha_div$Shannon[,"mean"] - mean_sd_alpha_div$Shannon[,"sd"]
+
+# Plot mean and standard deviation
+p2 <- ggplot(mean_sd_alpha_div, aes(x = pathologic_stage_label, y = Shannon[,"mean"]), color=patholoic_stage_label) +
+  geom_bar(aes(x = pathologic_stage_label, y = Shannon[,"mean"], fill=pathologic_stage_label), stat = "identity") +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2, position = position_dodge(width = 0.9)) +
+  labs(x = "Pathologic Stage", y = "Shannon Diversity") +
+  theme(legend.position = "none")
+print(p2)
+ggsave("figures/phyloseq_shannon_raw_filt_meansd.png", plot = p2)
+
+# Merge samples using phyloseq package
+physeq_st = merge_samples(physeq, "pathologic_stage_label")
+# repair variables that were damaged during merge (coerced to numeric)
+sample_data(physeq_st)$pathologic_stage_label <- factor(sample_names(physeq_st))
+p = plot_richness(physeq_st,x="pathologic_stage_label" ,color="pathologic_stage_label", measures=c("Shannon"))
+p + geom_point(size=5, alpha=0.7)
+ggsave("figures/phyloseq_shannon_raw_filt_merged.png", plot = p)
+
 
 # convert to tree summarized experiment using mia library and try again
 tse <- makeTreeSEFromPhyloseq(physeq)
@@ -141,9 +176,4 @@ print(diversity_plt)
 
 ggsave("figures/mia_logmodskewness_bystage.png", plot = diversity_plt)
 
-# NEXT NEED TO PLOT PCA FROM DIVERSITY MATRIX
-# find a way to access the matrix with original sample names and path stage label from the tse type
-# then plot using umao package
 
-div.umap <- umap(df)
-plot(div.umap)
