@@ -79,7 +79,7 @@ kraken_meta_UNC <- readRDS("data/kraken_meta_norm_filtered.RDS")
 kraken_data_UNC<- readRDS("data/kraken_norm_filtered.RDS")
 result <- run_zicoseq(kraken_data_UNC, kraken_meta_UNC)
 
-zicoObj <- result$zicoObj
+# zicoObj <- result$zicoObj
 zicoseq_data <- result$zicoseq_data
 
 zico_plot_UNC <- ZicoSeq.plot(zicoObj, pvalue.type = 'p.adj.fdr', cutoff = 0.1, text.size = 10,
