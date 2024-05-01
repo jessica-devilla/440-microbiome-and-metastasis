@@ -2,6 +2,7 @@
 
 library(GUniFrac)
 library(dplyr)
+library(ggplot2)
 
 #source("code/pca_by_phylum_family_genus.R")
 
@@ -15,8 +16,8 @@ remove_viruses <- function(df) {
 
 remove_contaminants <- function(df){
   # Subset the dataframe to exclude contaminant columns
-  contaminant_columns <- grepl("contaminant", names(kraken_data), ignore.case = TRUE)
-  kraken_data <- kraken_data[, !contaminant_columns]
+  contaminant_columns <- grepl("contaminant", names(df), ignore.case = TRUE)
+  df <-df[, !contaminant_columns]
   
 }
 
@@ -34,17 +35,19 @@ run_zicoseq <- function(kraken_data, kraken_meta){
   
   # examine dataset
   kraken_mat <- as.matrix(kraken_subset)
+  kraken_mat <- as.numeric(kraken_mat)
+  print(typeof(kraken_mat))
   zero_count <- sum(kraken_subset == 0) 
   print(kraken_subset[kraken_subset==0])
   nan_count <- sum(is.nan(kraken_mat))
   print(kraken_subset[is.nan(kraken_mat)])
+  
   
   #remove columns containing all zeroes from dataframe
   kraken_subset <- kraken_subset[, colSums(kraken_subset != 0) > 0]
   
   #get only genus labels
   colnames(kraken_subset) <- sub(".*__(.*)$", "\\1", colnames(kraken_subset))
-  
   
   zicoseq_data <- t(kraken_subset)
   #row_names <- 1:nrow(zicoseq_data)
@@ -65,21 +68,51 @@ run_zicoseq <- function(kraken_data, kraken_meta){
                      # Family-wise error rate control
                      is.fwer = TRUE,
                      verbose = TRUE, return.feature.dat = TRUE)
-  
   return(list(zicoObj = zicoObj, zicoseq_data = zicoseq_data))
   
 }
 
 
-kraken_meta <- readRDS("data/kraken_meta_norm_filtered.RDS")
-kraken_data<- readRDS("data/kraken_norm_filtered.RDS")
+### RUN ZICOSEQ ON UNC DATA
+
+kraken_meta_UNC <- readRDS("data/kraken_meta_norm_filtered.RDS")
+kraken_data_UNC<- readRDS("data/kraken_norm_filtered.RDS")
+result <- run_zicoseq(kraken_data_UNC, kraken_meta_UNC)
+
+zicoObj <- result$zicoObj
+zicoseq_data <- result$zicoseq_data
+
+zico_plot_UNC <- ZicoSeq.plot(zicoObj, pvalue.type = 'p.adj.fdr', cutoff = 0.1, text.size = 10,
+             out.dir = NULL, width = 10, height = 6)
+print(zico_plot_UNC)
+
+ggsave("figures/zico_plot_UNC_stagei_vs_stageiv.png", plot = zico_plot_UNC, width = 10, height = 6)
+
+### RUN ZICOSEQ ON ALL NORM DATA
+
+kraken_meta <- readRDS("data/kraken_metaCOAD.RDS")
+kraken_data <- readRDS("data/kraken_COAD.RDS")
+
+row.names(kraken_data) <- kraken_data$...1
+kraken_data <- subset(kraken_data, select = -c(...1))
+
+row.names(kraken_meta) <- kraken_meta$...1
+kraken_meta <- subset(kraken_meta, select = -c(...1))
+
+kraken_meta$pathologic_stage_label <- gsub("Stage IV([A-C])?", "Stage IV", kraken_meta$pathologic_stage_label)
+kraken_meta$pathologic_stage_label <- gsub("Stage III([A-C])?", "Stage III", kraken_meta$pathologic_stage_label)
+kraken_meta$pathologic_stage_label <- gsub("Stage II([A-C])?", "Stage II", kraken_meta$pathologic_stage_label)
+kraken_meta$pathologic_stage_label <- gsub("Stage I([A-C])?", "Stage I", kraken_meta$pathologic_stage_label)
+
 result <- run_zicoseq(kraken_data, kraken_meta)
 
 zicoObj <- result$zicoObj
 zicoseq_data <- result$zicoseq_data
 
 zico_plot <- ZicoSeq.plot(zicoObj, pvalue.type = 'p.adj.fdr', cutoff = 0.1, text.size = 10,
-             out.dir = NULL, width = 10, height = 6)
+                              out.dir = NULL, width = 10, height = 6)
 print(zico_plot)
 
-ggsave("figures/zico_plot_stagei_vs_stageiv.png", plot = zico_plot, width = 10, height = 6)
+ggsave("figures/zico_plot_alldata_stagei_vs_stageiv.png", plot = zico_plot, width = 10, height = 6)
+
+## RUN ZICOSEQ ON RAW DATA

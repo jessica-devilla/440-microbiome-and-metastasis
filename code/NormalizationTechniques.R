@@ -11,7 +11,6 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) {
 BiocManager::install("ConQuR")
 BiocManager::install("sva")
 BiocManager::install("limma")
-BiocManager::install("DESeq2")
 
 library(phyloseq)
 library(DESeq2)
