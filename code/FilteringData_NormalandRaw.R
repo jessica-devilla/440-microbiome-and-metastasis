@@ -60,59 +60,11 @@ kraken_COAD_genus <- kraken_COAD
 colnames(kraken_COAD_genus) <- sub(".*__(.*)$", "\\1", colnames(kraken_COAD_genus))
 
 #Filtering Metadata by Submitting Center and Experimental Type - Metadata and COAD data
+colnames(kraken_COAD_genus)[1] <- "id"
+colnames(kraken_metaCOAD)[1] <- "id"
 split_metadata_submittingcenter <- split(kraken_metaCOAD, kraken_metaCOAD$data_submitting_center_label)
 unique_centers <- unique(kraken_metaCOAD$data_submitting_center_label)
 unique_source <- unique(kraken_metaCOAD$tissue_source_site_label)
-
-for (center in unique_centers) {
-  dataset_name <- paste0("kraken_meta_", gsub(" ", "", center)) # Generate a unique variable name
-  assign(dataset_name, split_metadata_submittingcenter[[center]]) # Assign the dataset to the variable
-  
-  current_dataset <- get(dataset_name)
-
-  data_kraken_name <- paste0("kraken_COADg_", gsub(" ", "", center)) # Generate a unique variable name for kraken_COAD
-  filtered_kraken <- kraken_COAD_genus %>%
-    filter(...1 %in% current_dataset$...1) # Replace ...1 with the appropriate column name from kraken_COAD
-  
-  assign(data_kraken_name, filtered_kraken) # Assign the filtered kraken_COAD dataset
-  split_by_strategy <- split(current_dataset, current_dataset$experimental_strategy)
-
-  for (strategy in unique(current_dataset$experimental_strategy)) {
-    strategy_name <- paste0(dataset_name, "_", gsub(" ", "", strategy))
-    assign(strategy_name, split_by_strategy[[strategy]])
-    print(strategy_name)
-    current_strategy <- get(strategy_name)
-    
-    data_strategy_name <- paste0("kraken_COADg_", gsub(" ", "", center), "_", gsub(" ", "", strategy))
-    filtered_kraken_strategy <- kraken_COAD_genus %>%
-      filter(...1 %in%current_strategy$...1) # Replace ...1 with the appropriate column name from kraken_COAD
-    assign(data_strategy_name, filtered_kraken_strategy) # Assign the filtered kraken_COAD dataset for the current strategy
-  }
-}
-
-#Filtering by Tissue Source Site
-split_meta_source <- split(kraken_metaCOAD, kraken_metaCOAD$tissue_source_site_label)
-
-for (source in unique_source){
-  dataset_name <- paste0("kraken_meta_", gsub(" ", "", source)) # Generate a unique variable name
-  assign(dataset_name, split_meta_source[[source]]) # Assign the dataset to the variable
-  
-  current_dataset <- get(dataset_name)
-  
-  data_kraken_name <- paste0("kraken_COADg_", gsub(" ", "", source)) # Generate a unique variable name for kraken_COAD
-  filtered_kraken <- kraken_COAD_genus %>%
-    filter(...1 %in% current_dataset$...1) # Replace ...1 with the appropriate column name from kraken_COAD
-  
-  assign(data_kraken_name, filtered_kraken) # Assign the filtered kraken_COAD dataset
-}
-
-
-
-
-
-
-
-
 
 
 #Clean Dataframe for only RNA-Seq
