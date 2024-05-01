@@ -8,6 +8,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) {
 BiocManager::install("ConQuR")
 BiocManager::install("sva")
 BiocManager::install("limma")
+BiocManager::install("pamr")
 
 
 library(phyloseq)
