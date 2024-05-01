@@ -30,18 +30,22 @@ perform_kruskal_and_plot_abundance <- function(input_df, metadata_df, n_top, out
   kruskal_results_df <- data.frame(taxon = names(kruskal_results), p_value = unlist(kruskal_results))
 
   # Apply FDR correction
-  kruskal_results_df$p_adjust <- p.adjust(kruskal_results_df$p_value, method = "fdr")
+  kruskal_results_df$p_adjust <- p.adjust(kruskal_results_df$p_value, method = "BH")
   kruskal_results_df <- kruskal_results_df %>%
     arrange(p_adjust)
   
   #kruskal_results_df$taxon <- gsub("_", " ", kruskal_results_df$taxon)
   
+  kruskal_results_df$rank <- seq_len(nrow(kruskal_results_df))
+  
+  # Create a separate dataframe for ranked taxa
+  ranked_taxa_df <- kruskal_results_df %>%
+    select(taxon, rank)
+  
   # Select top n taxa with smallest p-values after correction
   top_taxa <- kruskal_results_df %>%
     slice_head(n = n_top) %>%
     pull(taxon)
-
-  
   
   # Filter the input dataframe to include only the top taxa
   filtered_df <- input_df %>%
@@ -87,7 +91,7 @@ perform_kruskal_and_plot_abundance <- function(input_df, metadata_df, n_top, out
   dev.off()  # Close PDF device
   
   # Return the top taxa with smallest p-values
-  return(kruskal_results_df)
+  return(ranked_taxa_df)
 }
 
 
@@ -97,44 +101,4 @@ min5_kruskal_voomsnm <- perform_kruskal_and_plot_abundance(input_df = kraken_COA
                                    n_top = 5,
                                    output_file = "totalkraken_voomsnm_min5_kruskal.pdf")
 
-min5_kruskal_unc_voomsnm<- perform_kruskal_and_plot_abundance(input_df = `kraken_COADg_UniversityofNorthCarolina_RNA-Seq`,
-                                                          metadata_df = `kraken_meta_UniversityofNorthCarolina_RNA-Seq`,                 
-                                                           n_top = 5,
-                                                           output_file = "uncrna_kraken_voomsnm_min5_kruskal.pdf")
 
-min5_kruskal_baylor_voomsnm <- perform_kruskal_and_plot_abundance(input_df = `kraken_COADg_BaylorCollegeofMedicine_WGS`,
-                                                                  metadata_df = `kraken_meta_BaylorCollegeofMedicine_WGS`,                 
-                                                                  n_top = 5,
-                                                                  output_file = "baylorwgs_kraken_voomsnm_min5_kruskal.pdf")
-
-min5_kruskal_harvard_voomsnm <- perform_kruskal_and_plot_abundance(input_df = `kraken_COADg_HarvardMedicalSchool_WGS`,
-                                                                  metadata_df = `kraken_meta_HarvardMedicalSchool_WGS`,                 
-                                                                  n_top = 5,
-                                                        output_file = "harvardwgs_kraken_voomsnm_min5_kruskal.pdf")
-combined_data <- bind_rows(min5_kruskal_unc_voomsnm, min5_kruskal_baylor_voomsnm, min5_kruskal_harvard_voomsnm)
-
-# Calculate average p_values and p_adjust values for each taxon
-averaged_data <- combined_data %>%
-  group_by(taxon) %>%
-  summarize(avg_p_value = mean(p_value),
-            avg_p_adjust = mean(p_adjust))
-
-ranked_data <- averaged_data %>%
-  arrange(avg_p_value)
-
-ranked_data2 <- averaged_data %>%
-  arrange(avg_p_adjust)
-
-# Print averaged data
-print(ranked_data)
-print(ranked_data2)
-
-#Looking at Some based on Tissue Source
-min5_kruskal_christianasource_voomsnm <- perform_kruskal_and_plot_abundance(input_df = `kraken_COADg_ChristianaHealthcare`,
-                                                                   metadata_df = `kraken_meta_ChristianaHealthcare`,                 
-                                                                   n_top = 5,
-                                                                   output_file = "christianasource_kraken_voomsnm_min5_kruskal.pdf")
-
-min5_kruskal_MSKCCsource_voomsnm <- perform_kruskal_and_plot_abundance(input_df = `kraken_COADg_MSKCC`,
-                                                                            metadata_df = `kraken_meta_MSKCC`,                                                                                         n_top = 5,
-                                                                            output_file = "MSKCCsource_kraken_voomsnm_min5_kruskal.pdf")
