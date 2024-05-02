@@ -37,6 +37,7 @@ norm.func <- function(p1,norm_method){
     dds <- estimateSizeFactors(dds)
     normalized_counts <- counts(dds, normalized = TRUE)
     norm_p1 <- as.data.frame(normalized_counts)
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
     
   }
@@ -56,6 +57,7 @@ norm.func <- function(p1,norm_method){
     
     # RLE+ normalization
     final_p1 <- rle.func(p1)
+    final_p1 <- as.data.frame(t(final_p1))
     return(final_p1)
   }
   
@@ -76,20 +78,22 @@ norm.func <- function(p1,norm_method){
     # RLE normalization
     norm_p1 <- rle.poscounts.func(p1)
     # let p2 have the same genes as p1 
-    final_p1 <- norm_p1
-    return(final_p1)
+    norm_p1 <- as.data.frame(t(norm_p1))
+    return(norm_p1)
   }
   
   
   # TSS, for samples
   if(norm_method=="TSS"){
     norm_p1 <- as.data.frame(apply(p1,2,function(x) x/sum(x)))
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
   }
   
   
   if(norm_method=="UQ"){
     norm_p1 <- as.data.frame(apply(p1,2,function(x) x/quantile(x[x>0])["75%"]))
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1) 
     
   }
@@ -105,6 +109,7 @@ norm.func <- function(p1,norm_method){
       as.data.frame(tab_norm)
     }
     norm_p1 <- css.func(p1)
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1) 
     
   }
@@ -123,6 +128,7 @@ norm.func <- function(p1,norm_method){
     
     # Perform TMM normalization
     norm_p1 <- tmm.func(p1)
+    norm_p1 <- as.data.frame(t(norm_p1))
     
     # Return the normalized matrix
     return(norm_p1)
@@ -134,6 +140,7 @@ norm.func <- function(p1,norm_method){
     p1[p1==0] <- 1
     # logcpm normalization
     norm_p1 <- as.data.frame(cpm(p1,log=TRUE))
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
   }
   
@@ -143,26 +150,32 @@ norm.func <- function(p1,norm_method){
     ps <- otu_table(as.matrix(p1), taxa_are_rows = FALSE)
     rarefied_ps <- rarefy_even_depth(ps, sample.size = 1)
     norm_p1 <- as.data.frame(otu_table(rarefied_ps))
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
   }
   
   
-  # CLR+, for samples
-  # based on TSS normalized data, add a pseudo count 0.65*minimum to zero values
-  if(norm_method == "CLR+") {
+  if (norm_method == "CLR+") {
     require(compositions)
+    
+    # TSS normalization
     norm_p1 <- as.data.frame(apply(p1, 2, function(x) x / sum(x)))
     
     # Replace all the 0 abundances with 0.65 times minimum non-zero abundance
-    epsilon <- 1e-6  # small constant to avoid taking log of zero
     min_non_zero <- min(norm_p1[norm_p1 != 0])
-    norm_p1[norm_p1 == 0] <- min_non_zero * 0.65
-    trans_p1 <- as.data.frame(apply(norm_p1, 2, function(x) clr(x + epsilon)))
-    offset <- 3  
-    trans_p1 <- trans_p1 + offset
+    pseudo_count <- min_non_zero * 0.65
+    
+    norm_p1[norm_p1 == 0] <- pseudo_count
+    
+    # CLR transformation
+    trans_p1 <- as.data.frame(apply(norm_p1, 2, function(x) clr(x)))
+    
+    # Ensure no negative values
+    trans_p1[trans_p1 < 0] <- 0
+    trans_p1 <- as.data.frame(t(trans_p1))
+    
     return(trans_p1)
   }
-  
   
   
   if (norm_method == "combat") {
@@ -193,6 +206,8 @@ norm.func <- function(p1,norm_method){
   
   if(norm_method=="MED"){
     norm_p1 <- as.data.frame(apply(p1,2,function(x) x/median(x[x>0])))
+    # let p2 have the same genes as p1 
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
   }
   
@@ -208,17 +223,31 @@ norm.func <- function(p1,norm_method){
     
     # GMPR normalization
     final_p1 <- gmpr.func(p1)
+    final_p1 <- as.data.frame(t(final_p1))
     return(final_p1)
   }
   
-  if(norm_method=="CLR_poscounts"){
+  if (norm_method == "CLR_poscounts") {
     require(compositions)
+    
     # TSS normalization
-    norm_p1 <- as.data.frame(apply(p1,2,function(x) x/sum(x)))
-    # clr transformation
-    trans_p1 <- as.data.frame(apply(norm_p1,2,function(x) clr(x)))
-    # let p2 have the same genes as p1 
-    return (trans_p1)
+    norm_p1 <- as.data.frame(apply(p1, 2, function(x) x / sum(x)))
+    
+    # Calculate the minimum non-zero abundance
+    min_non_zero <- min(norm_p1[norm_p1 != 0])
+    
+    # Add a pseudo-count to the data to avoid zero values
+    pseudo_count <- min_non_zero * 0.65
+    norm_p1[norm_p1 == 0] <- pseudo_count
+    
+    # CLR transformation
+    trans_p1 <- as.data.frame(apply(norm_p1, 2, function(x) clr(x)))
+    
+    # Ensure no negative values
+    trans_p1[trans_p1 < 0] <- 0
+    trans_p1 <- as.data.frame(t(trans_p1))
+    
+    return(trans_p1)
   }
   
   

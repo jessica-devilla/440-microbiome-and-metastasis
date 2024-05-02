@@ -30,6 +30,8 @@ physeq_beta_diversity <- function(physeq, dist_methods, name){
   plist <- vector("list", length(dist_methods))
   names(plist) = dist_methods
   
+  distance_matrices <- list()
+  
   for( i in dist_methods ){
     # Calculate distance matrix
     iDist <- phyloseq::distance(physeq, method=i)
@@ -45,6 +47,9 @@ physeq_beta_diversity <- function(physeq, dist_methods, name){
     
     # Save the graphic to file.
     plist[[i]] = p
+    
+    # Store the distance matrix
+    distance_matrices[[i]] <- iDist
   }
   
   
@@ -59,13 +64,17 @@ physeq_beta_diversity <- function(physeq, dist_methods, name){
   filename <- paste0("figures/beta_diversity/phyloseq_beta_diversity_", name, ".png")
   ggsave(filename, plot = p)
   
+  return(distance_matrices)
 }
 
 
 ## Sample run code
-#physeq <- readRDS('data/coad_raw_UNC_phyloseq.rds')
-#dist_methods <- unlist(distanceMethodList)
+physeq <- readRDS('data/coad_raw_UNC_phyloseq.rds')
+dist_methods <- unlist(distanceMethodList)
 #print(dist_methods)
-#dist_methods <- c("bray")
-#physeq_beta_diversity(physeq, dist_methods,"raw_UNC_bray")
+dist_methods <- c("bray")
+distance_matrixes <- physeq_beta_diversity(physeq, dist_methods,"raw_UNC_bray")
+
+bray <- distance_matrixes$bray
+
 
