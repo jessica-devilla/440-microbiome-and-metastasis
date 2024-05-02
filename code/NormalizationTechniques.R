@@ -17,10 +17,9 @@ library(DESeq2)
 
 
 
-batch_prep <- subset(kraken_metaCOAD_RNASeq_IlluminaGA_UNC, select = c("...1", "tissue_source_site_label"))
+batch_prep <- subset(kraken_metaCOAD, select = c("...1", "tissue_source_site_label"))
 row.names(batch_prep) <- batch_prep$...1
 batch_prep <- subset(batch_prep, select = -c(...1))
-
 
 
 norm.func <- function(p1,norm_method){
@@ -150,22 +149,17 @@ norm.func <- function(p1,norm_method){
   }
   
   
-  # CLR+, for samples
-  # based on TSS normalized data, add a pseudo count 0.65*minimum to zero values
-  if(norm_method == "CLR+") {
+  if(norm_method=="CLR+"){
     require(compositions)
-    norm_p1 <- as.data.frame(apply(p1, 2, function(x) x / sum(x)))
-    
-    # Replace all the 0 abundances with 0.65 times minimum non-zero abundance
-    epsilon <- 1e-6  # small constant to avoid taking log of zero
-    min_non_zero <- min(norm_p1[norm_p1 != 0])
-    norm_p1[norm_p1 == 0] <- min_non_zero * 0.65
-    trans_p1 <- as.data.frame(apply(norm_p1, 2, function(x) clr(x + epsilon)))
-    offset <- 3  
-    trans_p1 <- trans_p1 + offset
+    # TSS normalization
+    norm_p1 <- as.data.frame(apply(p1,2,function(x) x/sum(x)))
+    # replaced all the 0 abundances with 0.65 times minimum non-zero abundance
+    norm_p1[norm_p1==0] <- min(norm_p1[norm_p1!=0])*0.65
+    # clr transformation
+    trans_p1 <- as.data.frame(apply(norm_p1,2,function(x) clr(x)))
     return(trans_p1)
+    
   }
-  
   
   
   if (norm_method == "combat") {
@@ -196,6 +190,7 @@ norm.func <- function(p1,norm_method){
   
   if(norm_method=="MED"){
     norm_p1 <- as.data.frame(apply(p1,2,function(x) x/median(x[x>0])))
+    # let p2 have the same genes as p1 
     return(norm_p1)
   }
   
@@ -228,27 +223,29 @@ norm.func <- function(p1,norm_method){
 }
 
 #Normalization Techniques - Calling Function Above
-transposed_df_krakenILUNC <- t(kraken_raw_COADRNA_IlluminaGA_UNC_clean)
+transposed_df_kraken <- t(kraken_raw_clean)
+transposed_df_kraken <- as.data.frame(transposed_df_kraken)
+class(transposed_df_kraken)
 
-ILUNC_TSS <- norm.func(transposed_df_krakenILUNC, 'TSS')
-ILUNC_MED <- norm.func(transposed_df_krakenILUNC, 'MED')
-ILUNC_GMPR <- norm.func(transposed_df_krakenILUNC, 'GMPR')
-ILUNC_UQ <- norm.func(transposed_df_krakenILUNC, 'UQ')
-ILUNC_CSS <- norm.func(transposed_df_krakenILUNC, 'CSS')
-ILUNC_DEQ <- norm.func(transposed_df_krakenILUNC, 'DeSEQ')
-ILUNC_RLE <- norm.func(transposed_df_krakenILUNC, 'RLE+')
-ILUNC_RLEpos <- norm.func(transposed_df_krakenILUNC, 'RLE_poscounts')
-ILUNC_TMM <- norm.func(transposed_df_krakenILUNC, 'TMM')
-ILUNC_logcpm <- norm.func(transposed_df_krakenILUNC, 'logcpm')
-ILUNC_rarefy <- norm.func(transposed_df_krakenILUNC, 'rarefy')
-ILUNC_CLR <- norm.func(transposed_df_krakenILUNC, 'CLR+')
-ILUNC_CLRpos <- norm.func(transposed_df_krakenILUNC, 'CLR_poscounts')
+tot_TSS <- norm.func(transposed_df_kraken, 'TSS')
+tot_MED <- norm.func(transposed_df_kraken, "MED")
+tot_GMPR <- norm.func(transposed_df_kraken, 'GMPR')
+tot_UQ <- norm.func(transposed_df_kraken, 'UQ')
+tot_CSS <- norm.func(transposed_df_kraken, 'CSS')
+tot_DEQ <- norm.func(transposed_df_kraken, 'DeSEQ')
+tot_RLE <- norm.func(transposed_df_kraken, 'RLE+')
+tot_RLEpos <- norm.func(transposed_df_kraken, 'RLE_poscounts')
+tot_TMM <- norm.func(transposed_df_kraken, 'TMM')
+tot_logcpm <- norm.func(transposed_df_kraken, 'logcpm')
+tot_rarefy <- norm.func(transposed_df_kraken, 'rarefy')
+tot_CLR <- norm.func(transposed_df_kraken, 'CLR+')
+tot_CLRpos <- norm.func(transposed_df_kraken, 'CLR_poscounts')
 #ILUNC_combat <- norm.func(transposed_df_krakenILUNC, 'combat')
 
 
 #Adding Stage Labels to Normalization Techniques 
-stage_labels <- data.frame(pathologic_stage_label = kraken_metaCOADRNA_Illumina_UNC_clean$pathologic_stage_label,
-                           row.names = row.names(kraken_metaCOADRNA_Illumina_UNC_clean))
+stage_labels <- data.frame(pathologic_stage_label = kraken_metaCOAD_clean$pathologic_stage_label,
+                           row.names = row.names(kraken_metaCOAD_clean))
 stage_labels <- t(stage_labels)
 #Add Stage Label Function
 add_stage_labels <- function(df, stage_labels) {
@@ -263,26 +260,90 @@ add_stage_labels <- function(df, stage_labels) {
   return(df)
 }
 #Call Function for Each Normalization Technique
-ILUNC_TSS <- add_stage_labels(ILUNC_TSS, stage_labels)
-ILUNC_MED <- add_stage_labels(ILUNC_MED, stage_labels)
-ILUNC_GMPR <- add_stage_labels(ILUNC_GMPR, stage_labels)
-ILUNC_UQ <- add_stage_labels(ILUNC_UQ, stage_labels)
-ILUNC_CSS <- add_stage_labels(ILUNC_CSS, stage_labels)
-ILUNC_DEQ <- add_stage_labels(ILUNC_DEQ, stage_labels)
-ILUNC_RLE <- add_stage_labels(ILUNC_RLE, stage_labels)
-ILUNC_RLEpos <- add_stage_labels(ILUNC_RLEpos, stage_labels)
-ILUNC_TMM <- add_stage_labels(ILUNC_TMM, stage_labels)
-ILUNC_logcpm <- add_stage_labels(ILUNC_logcpm, stage_labels)
-ILUNC_rarefy <- add_stage_labels(ILUNC_rarefy, stage_labels)
-ILUNC_CLR <- add_stage_labels(ILUNC_CLR, stage_labels)
-ILUNC_CLRpos <- add_stage_labels(ILUNC_CLRpos, stage_labels)
+tot_TSS <- add_stage_labels(tot_TSS, stage_labels)
+tot_MED <- add_stage_labels(tot_MED, stage_labels)
+tot_GMPR <- add_stage_labels(tot_GMPR, stage_labels)
+tot_UQ <- add_stage_labels(tot_UQ, stage_labels)
+tot_CSS <- add_stage_labels(tot_CSS, stage_labels)
+tot_DEQ <- add_stage_labels(tot_DEQ, stage_labels)
+tot_RLE <- add_stage_labels(tot_RLE, stage_labels)
+tot_RLEpos <- add_stage_labels(tot_RLEpos, stage_labels)
+tot_TMM <- add_stage_labels(tot_TMM, stage_labels)
+tot_logcpm <- add_stage_labels(tot_logcpm, stage_labels)
+tot_rarefy <- add_stage_labels(tot_rarefy, stage_labels)
+tot_CLR <- add_stage_labels(tot_CLR, stage_labels)
+tot_CLRpos <- add_stage_labels(tot_CLRpos, stage_labels)
 #ILUNC_combat <- add_stage_labels(ILUNC_combat, stage_labels)
 
-install.packages("uwot")
-library(uwot)
+tot_TSS <- t(tot_TSS)
+tot_MED <- t(tot_MED)
+tot_GMPR <- t(tot_GMPR)
+tot_UQ <- t(tot_UQ)
+tot_CSS <- t(tot_CSS)
+tot_DEQ <- t(tot_DEQ)
+tot_RLE <- t(tot_RLE)
+tot_RLEpos <- t(tot_RLEpos)
+tot_TMM <- t(tot_TMM)
+tot_logcpm <- t(tot_logcpm)
+tot_rarefy <- t(tot_rarefy)
+tot_CLR <- t(tot_CLR)
+tot_CLRpos <- t(tot_CLRpos)
+
+# Combine datasets into a single data frame with a 'Dataset' column
+combined_data <- rbind(
+  data.frame(tot_TSS, Dataset = "TSS"),
+  data.frame(tot_MED, Dataset = "MED"),
+  data.frame(tot_GMPR, Dataset = "GMPR"),
+  data.frame(tot_UQ, Dataset = "UQ"),
+  data.frame(tot_CSS, Dataset = "CSS"),
+  data.frame(tot_DEQ, Dataset = "DEQ"),
+  data.frame(tot_RLE, Dataset = "RLE"),
+  data.frame(tot_RLEpos, Dataset = "RLEpos"),
+  data.frame(tot_TMM, Dataset = "TMM"),
+  data.frame(tot_logcpm, Dataset = "logcpm"),
+  data.frame(tot_rarefy, Dataset = "rarefy"),
+  data.frame(tot_CLR, Dataset = "CLR"),
+  data.frame(tot_CLRpos, Dataset = "CLRpos")
+)
+
+combined_data$stage_label_numeric <- as.numeric(factor(combined_data$stage_label))
+combined_data_numeric <- as.matrix(combined_data[-ncol(combined_data)])
+
+# Perform UMAP on the combined data
+# Perform UMAP on the combined data
+library(umap)
 library(ggplot2)
-install.packages("forcats")
-library(forcats)
+library(ggplotify)
+library(FactoMineR)  # For PCA
+
+
+umap_result_all <- umap(combined_data_numeric [-nrow(combined_data_numeric), ], n_neighbors = 15, n_components = 2, metric = "euclidean")
+
+# Plot UMAP with points colored by dataset
+umap_plot <- ggplot(as.data.frame(umap_result_all$layout), aes(x = V1, y = V2)) +
+  geom_point(aes(color = combined_data$Dataset), size = 2) +
+  scale_color_manual(values = rainbow(length(unique(combined_data$Dataset)))) +
+  ggtitle("UMAP Visualization of All Datasets") +
+  theme_minimal()
+
+# Add legend
+legend("topright", legend = levels(combined_data$Dataset), 
+       col = 1:length(unique(combined_data$Dataset)), pch = 20)
+
+# Save the UMAP plot as a PDF file
+ggsave("umap_combined_datasets_with_stage.pdf", umap_plot, width = 8, height = 6)
+
+
+
+
+
+
+
+
+
+
+
+
 
 combined_data <- cbind(ILUNC_TSS, ILUNC_MED, ILUNC_GMPR, ILUNC_UQ, ILUNC_CSS, ILUNC_DEQ, ILUNC_RLE,
                        ILUNC_RLEpos, ILUNC_TMM, ILUNC_logcpm, ILUNC_rarefy, ILUNC_CLR, ILUNC_CLRpos)
@@ -290,7 +351,35 @@ combined_data$stage_label_numeric <- as.numeric(factor(combined_data$stage_label
 combined_data_numeric <- as.matrix(combined_data[-ncol(combined_data)])
 combined_data <- t(combined_data_numeric)
 
+library(umap)
+library(ggplot2)
+library(ggplotify)
+library(FactoMineR)  # For PCA
 
+# Assuming you have combined your datasets into a single data frame 'combined_data'
+# with an additional column 'Dataset' indicating the dataset for each row
+
+# UMAP Visualization
+umap_result <- umap(combined_data[, -ncol(combined_data)])  # Exclude the 'Dataset' column
+umap_df <- as.data.frame(umap_result$layout)
+umap_df$Dataset <- combined_data$Dataset
+
+umap_plot <- ggplot(umap_df, aes(x = V1, y = V2, color = Dataset)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "UMAP Visualization")
+
+
+
+
+
+
+
+install.packages("uwot")
+library(uwot)
+library(ggplot2)
+install.packages("forcats")
+library(forcats)
 umap_result_all <- umap(combined_data[-nrow(combined_data), ], n_neighbors = 15, n_components = 2, metric = "euclidean")
 
 # Plot UMAP with points colored by dataset

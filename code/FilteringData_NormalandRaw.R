@@ -59,14 +59,6 @@ kraken_metaCOAD$pathologic_stage_label <- gsub("Stage I([A-C])?", "Stage I", kra
 kraken_COAD_genus <- kraken_COAD
 colnames(kraken_COAD_genus) <- sub(".*__(.*)$", "\\1", colnames(kraken_COAD_genus))
 
-#Filtering Metadata by Submitting Center and Experimental Type - Metadata and COAD data
-colnames(kraken_COAD_genus)[1] <- "id"
-colnames(kraken_metaCOAD)[1] <- "id"
-split_metadata_submittingcenter <- split(kraken_metaCOAD, kraken_metaCOAD$data_submitting_center_label)
-unique_centers <- unique(kraken_metaCOAD$data_submitting_center_label)
-unique_source <- unique(kraken_metaCOAD$tissue_source_site_label)
-
-
 #Clean Dataframe for only RNA-Seq
 kraken_metaCOAD_RNASeq <- subset(kraken_metaCOAD, experimental_strategy == 'RNA-Seq')
 row.names(kraken_metaCOAD_RNASeq) <- kraken_metaCOAD_RNASeq$...1
@@ -94,9 +86,29 @@ kraken_metaCOADRNA_Illumina_UNC_clean <- subset(kraken_metaCOAD_RNASeq_IlluminaG
 #Filtering/Importing Non-Normalized Data,
 kraken_orig_otu <- Kraken_TCGA_Raw_Data_17625_Samples
 kraken_orig_otu_df <- as.data.frame(kraken_orig_otu)
+kraken_raw_COAD <- kraken_orig_otu_df %>%
+  filter(...1 %in%kraken_metaCOAD$...1)
+colnames(kraken_raw_COAD) <- sub(".*__(.*)$", "\\1", colnames(kraken_raw_COAD))
+kraken_metaCOAD_clean <- kraken_metaCOAD
+row.names(kraken_metaCOAD_clean) <- kraken_metaCOAD_clean$...1
+kraken_metaCOAD_clean <- subset(kraken_metaCOAD_clean, select = -c(...1))
+
+kraken_raw_clean <- kraken_raw_COAD
+row.names(kraken_raw_clean) <- kraken_metaCOAD$...1
+kraken_raw_clean <- subset(kraken_raw_clean, select = -c(...1))
+
+
 kraken_raw_COADRNA_IlluminaGA_UNC <- kraken_orig_otu_df %>%
   filter(...1 %in% kraken_metaCOAD_RNASeq_IlluminaGA_UNC$...1)
 row.names(kraken_raw_COADRNA_IlluminaGA_UNC) <- kraken_raw_COADRNA_IlluminaGA_UNC$...1
 kraken_raw_COADRNA_IlluminaGA_UNC_clean <- subset(kraken_raw_COADRNA_IlluminaGA_UNC, select = -c(...1))
+
+
+#Filtering Metadata by Submitting Center and Experimental Type - Metadata and COAD data
+#colnames(kraken_COAD_genus)[1] <- "id"
+#colnames(kraken_metaCOAD)[1] <- "id"
+#kraken_COAD_genus_clean <- subset(kraken_COAD_genus, select = -c(id))
+#kraken_metaCOAD_clean <- subset(kraken_metaCOAD, select= -c(id))
+
 
 
