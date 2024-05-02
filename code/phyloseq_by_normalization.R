@@ -79,9 +79,10 @@ for (method in names(normalized_dataframes)) {
   
   # Store the phyloseq object in the list with method as the key
   phyloseq_objects[[method]] <- physeq
+  
+  filename <- paste0("unc_raw_", method)
+  # run beta diversity function and make plot
+  physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
 }
-
-# Check the list of phyloseq objects
-print(phyloseq_objects)
 
 
