@@ -175,7 +175,7 @@ kraken_data <-readRDS("data/kraken_raw_filtered.RDS")
 
 
 physeq <- make_phyloseq_object(kraken_data, kraken_meta)
-saveRDS(physeq, 'data/coad_raw_phyloseq.rds')
+saveRDS(physeq, 'data/coad_raw_UNC_phyloseq.rds')
 
 # test plot
 plot_bar(physeq, x="pathologic_stage_label", fill="Phylum")
