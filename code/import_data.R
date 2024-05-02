@@ -32,11 +32,14 @@ kraken_meta_url <- "https://media.githubusercontent.com/media/jessica-devilla/JD
 kraken_metadata <-read_csv(url(kraken_meta_url),show_col_types = FALSE)
 kraken_metadata_df <- as.data.frame(kraken_metadata, stringsAsFactors = FALSE)
 
+kraken_raw <- read_csv("data/Kraken-TCGA-Raw-Data-17625-Samples.csv",show_col_types = FALSE)
+kraken_raw_df <- as.data.frame(kraken_raw,stringsAsFactors=FALSE)
 
 cat("Saving RDS files...\n")
 # Save the dataframes as an R file
 saveRDS(kraken_df, file = "data/kraken_df.RDS")
 saveRDS(kraken_df, file = "data/kraken_metadatadf.RDS")
+saveRDS(kraken_raw, file = "data/kraken_raw.RDS")
 
 # Subset the dataframe to get only values from COAD patients
 kraken_metaCOAD <- subset(kraken_metadata_df, disease_type == "Colon Adenocarcinoma")
