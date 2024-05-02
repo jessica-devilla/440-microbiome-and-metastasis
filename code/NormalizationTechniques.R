@@ -149,16 +149,25 @@ norm.func <- function(p1,norm_method){
   }
   
   
-  if(norm_method=="CLR+"){
+  if (norm_method == "CLR+") {
     require(compositions)
-    # TSS normalization
-    norm_p1 <- as.data.frame(apply(p1,2,function(x) x/sum(x)))
-    # replaced all the 0 abundances with 0.65 times minimum non-zero abundance
-    norm_p1[norm_p1==0] <- min(norm_p1[norm_p1!=0])*0.65
-    # clr transformation
-    trans_p1 <- as.data.frame(apply(norm_p1,2,function(x) clr(x)))
-    return(trans_p1)
     
+    # TSS normalization
+    norm_p1 <- as.data.frame(apply(p1, 2, function(x) x / sum(x)))
+    
+    # Replace all the 0 abundances with 0.65 times minimum non-zero abundance
+    min_non_zero <- min(norm_p1[norm_p1 != 0])
+    pseudo_count <- min_non_zero * 0.65
+    
+    norm_p1[norm_p1 == 0] <- pseudo_count
+    
+    # CLR transformation
+    trans_p1 <- as.data.frame(apply(norm_p1, 2, function(x) clr(x)))
+    
+    # Ensure no negative values
+    trans_p1[trans_p1 < 0] <- 0
+    
+    return(trans_p1)
   }
   
   
@@ -209,14 +218,26 @@ norm.func <- function(p1,norm_method){
     return(final_p1)
   }
   
-  if(norm_method=="CLR_poscounts"){
+  if (norm_method == "CLR_poscounts") {
     require(compositions)
+    
     # TSS normalization
-    norm_p1 <- as.data.frame(apply(p1,2,function(x) x/sum(x)))
-    # clr transformation
-    trans_p1 <- as.data.frame(apply(norm_p1,2,function(x) clr(x)))
-    # let p2 have the same genes as p1 
-    return (trans_p1)
+    norm_p1 <- as.data.frame(apply(p1, 2, function(x) x / sum(x)))
+    
+    # Calculate the minimum non-zero abundance
+    min_non_zero <- min(norm_p1[norm_p1 != 0])
+    
+    # Add a pseudo-count to the data to avoid zero values
+    pseudo_count <- min_non_zero * 0.65
+    norm_p1[norm_p1 == 0] <- pseudo_count
+    
+    # CLR transformation
+    trans_p1 <- as.data.frame(apply(norm_p1, 2, function(x) clr(x)))
+    
+    # Ensure no negative values
+    trans_p1[trans_p1 < 0] <- 0
+    
+    return(trans_p1)
   }
   
   
@@ -306,20 +327,41 @@ combined_data <- rbind(
   data.frame(tot_CLRpos, Dataset = "CLRpos")
 )
 
+
+
+
+
+
+
+
+
+# Convert stage labels to numeric
 combined_data$stage_label_numeric <- as.numeric(factor(combined_data$stage_label))
-combined_data_numeric <- as.matrix(combined_data[-ncol(combined_data)])
+rownames(combined_data) <- as.numeric(rownames(combined_data))
+
+# Convert column names to numeric or factor levels
+combined_data <- as.data.frame(sapply(combined_data, function(x) {
+  if (is.numeric(x)) {
+    x
+  } else {
+    as.numeric(as.factor(x))
+  }
+}))
+
+# Convert the numeric data to a matrix
+combined_data_numeric <- as.matrix(combined_data)
 
 # Perform UMAP on the combined data
+umap_result_all <- umap(combined_data_numeric[-nrow(combined_data_numeric), ], 
+                        n_neighbors = 15, n_components = 2, metric = "euclidean")
+
 # Perform UMAP on the combined data
 library(umap)
-library(ggplot2)
-library(ggplotify)
-library(FactoMineR)  # For PCA
-
-
-umap_result_all <- umap(combined_data_numeric [-nrow(combined_data_numeric), ], n_neighbors = 15, n_components = 2, metric = "euclidean")
+umap_result_all <- umap(as.matrix(combined_data_numeric[-ncol(combined_data_numeric), -ncol(combined_data_numeric)]), 
+                        n_neighbors = 15, n_components = 2, metric = "euclidean")
 
 # Plot UMAP with points colored by dataset
+library(ggplot2)
 umap_plot <- ggplot(as.data.frame(umap_result_all$layout), aes(x = V1, y = V2)) +
   geom_point(aes(color = combined_data$Dataset), size = 2) +
   scale_color_manual(values = rainbow(length(unique(combined_data$Dataset)))) +
@@ -327,48 +369,11 @@ umap_plot <- ggplot(as.data.frame(umap_result_all$layout), aes(x = V1, y = V2)) 
   theme_minimal()
 
 # Add legend
-legend("topright", legend = levels(combined_data$Dataset), 
-       col = 1:length(unique(combined_data$Dataset)), pch = 20)
+legend <- ggplotify::legend_ggplot(umap_plot, "topright")
+umap_plot <- umap_plot + theme(legend.position = "none")
 
 # Save the UMAP plot as a PDF file
 ggsave("umap_combined_datasets_with_stage.pdf", umap_plot, width = 8, height = 6)
-
-
-
-
-
-
-
-
-
-
-
-
-
-combined_data <- cbind(ILUNC_TSS, ILUNC_MED, ILUNC_GMPR, ILUNC_UQ, ILUNC_CSS, ILUNC_DEQ, ILUNC_RLE,
-                       ILUNC_RLEpos, ILUNC_TMM, ILUNC_logcpm, ILUNC_rarefy, ILUNC_CLR, ILUNC_CLRpos)
-combined_data$stage_label_numeric <- as.numeric(factor(combined_data$stage_label))
-combined_data_numeric <- as.matrix(combined_data[-ncol(combined_data)])
-combined_data <- t(combined_data_numeric)
-
-library(umap)
-library(ggplot2)
-library(ggplotify)
-library(FactoMineR)  # For PCA
-
-# Assuming you have combined your datasets into a single data frame 'combined_data'
-# with an additional column 'Dataset' indicating the dataset for each row
-
-# UMAP Visualization
-umap_result <- umap(combined_data[, -ncol(combined_data)])  # Exclude the 'Dataset' column
-umap_df <- as.data.frame(umap_result$layout)
-umap_df$Dataset <- combined_data$Dataset
-
-umap_plot <- ggplot(umap_df, aes(x = V1, y = V2, color = Dataset)) +
-  geom_point() +
-  theme_minimal() +
-  labs(title = "UMAP Visualization")
-
 
 
 
