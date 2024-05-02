@@ -1,5 +1,21 @@
 #https://github.com/wbb121/Norm-Methods-Comparison/blob/main/helper.R
 
+#Filtering/Importing Non-Normalized Data,
+kraken_orig_otu <- Kraken_TCGA_Raw_Data_17625_Samples
+kraken_orig_otu_df <- as.data.frame(kraken_orig_otu)
+kraken_raw_COAD <- kraken_orig_otu_df %>%
+  filter(...1 %in%kraken_metaCOAD$...1)
+colnames(kraken_raw_COAD) <- sub(".*__(.*)$", "\\1", colnames(kraken_raw_COAD))
+kraken_metaCOAD_clean <- kraken_metaCOAD
+row.names(kraken_metaCOAD_clean) <- kraken_metaCOAD_clean$...1
+kraken_metaCOAD_clean <- subset(kraken_metaCOAD_clean, select = -c(...1))
+
+kraken_raw_clean <- kraken_raw_COAD
+row.names(kraken_raw_clean) <- kraken_metaCOAD$...1
+kraken_raw_clean <- subset(kraken_raw_clean, select = -c(...1))
+
+
+
 install.packages("phyloseq")
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
