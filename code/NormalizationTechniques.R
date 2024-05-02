@@ -1,7 +1,5 @@
 #https://github.com/wbb121/Norm-Methods-Comparison/blob/main/helper.R
 
-
-
 install.packages("phyloseq")
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
@@ -22,6 +20,8 @@ row.names(batch_prep) <- batch_prep$...1
 batch_prep <- subset(batch_prep, select = -c(...1))
 
 
+
+
 norm.func <- function(p1,norm_method){
   # remove the all zero genes
   p1 <- p1[rowSums(p1)>0,]
@@ -39,6 +39,7 @@ norm.func <- function(p1,norm_method){
     dds <- estimateSizeFactors(dds)
     normalized_counts <- counts(dds, normalized = TRUE)
     norm_p1 <- as.data.frame(normalized_counts)
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
     
   }
@@ -58,6 +59,7 @@ norm.func <- function(p1,norm_method){
     
     # RLE+ normalization
     final_p1 <- rle.func(p1)
+    final_p1 <- as.data.frame(t(final_p1))
     return(final_p1)
   }
   
@@ -78,20 +80,22 @@ norm.func <- function(p1,norm_method){
     # RLE normalization
     norm_p1 <- rle.poscounts.func(p1)
     # let p2 have the same genes as p1 
-    final_p1 <- norm_p1
-    return(final_p1)
+    norm_p1 <- as.data.frame(t(norm_p1))
+    return(norm_p1)
   }
   
   
   # TSS, for samples
   if(norm_method=="TSS"){
     norm_p1 <- as.data.frame(apply(p1,2,function(x) x/sum(x)))
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
   }
   
   
   if(norm_method=="UQ"){
     norm_p1 <- as.data.frame(apply(p1,2,function(x) x/quantile(x[x>0])["75%"]))
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1) 
     
   }
@@ -107,6 +111,7 @@ norm.func <- function(p1,norm_method){
       as.data.frame(tab_norm)
     }
     norm_p1 <- css.func(p1)
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1) 
     
   }
@@ -125,6 +130,7 @@ norm.func <- function(p1,norm_method){
     
     # Perform TMM normalization
     norm_p1 <- tmm.func(p1)
+    norm_p1 <- as.data.frame(t(norm_p1))
     
     # Return the normalized matrix
     return(norm_p1)
@@ -136,6 +142,7 @@ norm.func <- function(p1,norm_method){
     p1[p1==0] <- 1
     # logcpm normalization
     norm_p1 <- as.data.frame(cpm(p1,log=TRUE))
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
   }
   
@@ -145,6 +152,7 @@ norm.func <- function(p1,norm_method){
     ps <- otu_table(as.matrix(p1), taxa_are_rows = FALSE)
     rarefied_ps <- rarefy_even_depth(ps, sample.size = 1)
     norm_p1 <- as.data.frame(otu_table(rarefied_ps))
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
   }
   
@@ -166,6 +174,7 @@ norm.func <- function(p1,norm_method){
     
     # Ensure no negative values
     trans_p1[trans_p1 < 0] <- 0
+    trans_p1 <- as.data.frame(t(trans_p1))
     
     return(trans_p1)
   }
@@ -200,6 +209,7 @@ norm.func <- function(p1,norm_method){
   if(norm_method=="MED"){
     norm_p1 <- as.data.frame(apply(p1,2,function(x) x/median(x[x>0])))
     # let p2 have the same genes as p1 
+    norm_p1 <- as.data.frame(t(norm_p1))
     return(norm_p1)
   }
   
@@ -215,6 +225,7 @@ norm.func <- function(p1,norm_method){
     
     # GMPR normalization
     final_p1 <- gmpr.func(p1)
+    final_p1 <- as.data.frame(t(final_p1))
     return(final_p1)
   }
   
@@ -236,6 +247,7 @@ norm.func <- function(p1,norm_method){
     
     # Ensure no negative values
     trans_p1[trans_p1 < 0] <- 0
+    trans_p1 <- as.data.frame(t(trans_p1))
     
     return(trans_p1)
   }
@@ -246,7 +258,6 @@ norm.func <- function(p1,norm_method){
 #Normalization Techniques - Calling Function Above
 transposed_df_kraken <- t(kraken_raw_clean)
 transposed_df_kraken <- as.data.frame(transposed_df_kraken)
-class(transposed_df_kraken)
 
 tot_TSS <- norm.func(transposed_df_kraken, 'TSS')
 tot_MED <- norm.func(transposed_df_kraken, "MED")
@@ -261,77 +272,115 @@ tot_logcpm <- norm.func(transposed_df_kraken, 'logcpm')
 tot_rarefy <- norm.func(transposed_df_kraken, 'rarefy')
 tot_CLR <- norm.func(transposed_df_kraken, 'CLR+')
 tot_CLRpos <- norm.func(transposed_df_kraken, 'CLR_poscounts')
-#ILUNC_combat <- norm.func(transposed_df_krakenILUNC, 'combat')
 
+library(umap)
+library(ggplot2)
 
-#Adding Stage Labels to Normalization Techniques 
-stage_labels <- data.frame(pathologic_stage_label = kraken_metaCOAD_clean$pathologic_stage_label,
-                           row.names = row.names(kraken_metaCOAD_clean))
-stage_labels <- t(stage_labels)
-#Add Stage Label Function
-add_stage_labels <- function(df, stage_labels) {
-  common_samples <- intersect(colnames(df), colnames(stage_labels))
-  if (length(common_samples) > 0) {
-    df <- df[, common_samples]  # Retain only columns present in both dataframes
-    df <- rbind(df, stage_labels[, common_samples])
-    rownames(df)[nrow(df)] <- "stage_label"
-  } else {
-    warning("No common samples found between dataframe and stage labels.")
-  }
-  return(df)
-}
-#Call Function for Each Normalization Technique
-tot_TSS <- add_stage_labels(tot_TSS, stage_labels)
-tot_MED <- add_stage_labels(tot_MED, stage_labels)
-tot_GMPR <- add_stage_labels(tot_GMPR, stage_labels)
-tot_UQ <- add_stage_labels(tot_UQ, stage_labels)
-tot_CSS <- add_stage_labels(tot_CSS, stage_labels)
-tot_DEQ <- add_stage_labels(tot_DEQ, stage_labels)
-tot_RLE <- add_stage_labels(tot_RLE, stage_labels)
-tot_RLEpos <- add_stage_labels(tot_RLEpos, stage_labels)
-tot_TMM <- add_stage_labels(tot_TMM, stage_labels)
-tot_logcpm <- add_stage_labels(tot_logcpm, stage_labels)
-tot_rarefy <- add_stage_labels(tot_rarefy, stage_labels)
-tot_CLR <- add_stage_labels(tot_CLR, stage_labels)
-tot_CLRpos <- add_stage_labels(tot_CLRpos, stage_labels)
-#ILUNC_combat <- add_stage_labels(ILUNC_combat, stage_labels)
-
-tot_TSS <- t(tot_TSS)
-tot_MED <- t(tot_MED)
-tot_GMPR <- t(tot_GMPR)
-tot_UQ <- t(tot_UQ)
-tot_CSS <- t(tot_CSS)
-tot_DEQ <- t(tot_DEQ)
-tot_RLE <- t(tot_RLE)
-tot_RLEpos <- t(tot_RLEpos)
-tot_TMM <- t(tot_TMM)
-tot_logcpm <- t(tot_logcpm)
-tot_rarefy <- t(tot_rarefy)
-tot_CLR <- t(tot_CLR)
-tot_CLRpos <- t(tot_CLRpos)
-
-# Combine datasets into a single data frame with a 'Dataset' column
-combined_data <- rbind(
-  data.frame(tot_TSS, Dataset = "TSS"),
-  data.frame(tot_MED, Dataset = "MED"),
-  data.frame(tot_GMPR, Dataset = "GMPR"),
-  data.frame(tot_UQ, Dataset = "UQ"),
-  data.frame(tot_CSS, Dataset = "CSS"),
-  data.frame(tot_DEQ, Dataset = "DEQ"),
-  data.frame(tot_RLE, Dataset = "RLE"),
-  data.frame(tot_RLEpos, Dataset = "RLEpos"),
-  data.frame(tot_TMM, Dataset = "TMM"),
-  data.frame(tot_logcpm, Dataset = "logcpm"),
-  data.frame(tot_rarefy, Dataset = "rarefy"),
-  data.frame(tot_CLR, Dataset = "CLR"),
-  data.frame(tot_CLRpos, Dataset = "CLRpos")
+# Combine all datasets into one dataframe
+combined_df <- rbind(
+  cbind(tot_TSS, Dataset = "TSS"),
+  cbind(tot_MED, Dataset = "MED"),
+  cbind(tot_GMPR, Dataset = "GMPR"),
+  cbind(tot_UQ, Dataset = "UQ"),
+  cbind(tot_CSS, Dataset = "CSS"),
+  cbind(tot_DEQ, Dataset = "DeSEQ"),
+  cbind(tot_RLE, Dataset = "RLE+"),
+  cbind(tot_RLEpos, Dataset = "RLE_poscounts"),
+  cbind(tot_TMM, Dataset = "TMM"),
+  cbind(tot_logcpm, Dataset = "logcpm"),
+  cbind(tot_rarefy, Dataset = "rarefy"),
+  cbind(tot_CLR, Dataset = "CLR+"),
+  cbind(tot_CLRpos, Dataset = "CLR_poscounts")
 )
 
+# Remove any rows with missing values
+combined_df <- na.omit(combined_df)
+
+# Extract feature matrix (taxa) and dataset labels
+X <- as.matrix(combined_df[, -ncol(combined_df)])
+dataset_labels <- combined_df$Dataset
+
+# Perform UMAP embedding
+umap_result <- umap(X)
+
+# Create a dataframe for plotting
+umap_df <- data.frame(UMAP1 = umap_result$layout[, 1],
+                      UMAP2 = umap_result$layout[, 2],
+                      Dataset = dataset_labels)
+
+# Plot the UMAP embeddings, coloring by dataset
+umap_plot <- ggplot(umap_df, aes(x = UMAP1, y = UMAP2, color = Dataset)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "UMAP Visualization of Combined Datasets",
+       color = "Dataset")
+
+ggsave("umap_plot.pdf", umap_plot, width = 8, height = 6)
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(umap)
+library(ggplot2)
+
+# Assuming you have already loaded your datasets tot_TSS, tot_MED, tot_GMPR, etc.
+
+# Combine all dataframes into one list
+datasets <- list(tot_TSS, tot_MED, tot_GMPR, tot_UQ, tot_CSS, tot_DEQ, tot_RLE, tot_RLEpos, tot_TMM, tot_logcpm, tot_rarefy, tot_CLR, tot_CLRpos)
+
+# Get the common row names and column names across all datasets
+common_row_names <- Reduce(intersect, lapply(datasets, rownames))
+common_col_names <- Reduce(intersect, lapply(datasets, colnames))
+
+# Extract common data from each dataset and convert stage labels to numeric
+common_datasets <- lapply(datasets, function(df) {
+  df <- df[common_row_names, common_col_names]
+  if ("stage_label" %in% colnames(df)) {
+    df$stage_label <- as.numeric(gsub("Stage ", "", df$stage_label))
+  } else {
+    print("no stage_label")
+  }
+  return(df)
+})
+
+# Combine common datasets into one matrix
+combined_data <- do.call(rbind, common_datasets)
+
+# Create dataset labels
+dataset_labels <- rep(c("TSS", "MED", "GMPR", "UQ", "CSS", "DEQ", "RLE", "RLEpos", "TMM", "logcpm", "rarefy", "CLR", "CLRpos"), 
+                      sapply(common_datasets, nrow))
+
+# Perform UMAP embedding
+umap_result <- umap(combined_data)
+
+# Visualize the UMAP embedding
+umap_plot <- ggplot(umap_result$layout, aes(x = UMAP1, y = UMAP2, color = factor(dataset_labels))) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "UMAP Visualization of Combined Datasets",
+       color = "Dataset")
+
+print(umap_plot)
 
 
 
@@ -397,3 +446,41 @@ ggplot(as.data.frame(umap_result_all$layout), aes(x = V1, y = V2)) +
 # Add legend
 legend("topright", legend = colnames(combined_data)[-ncol(combined_data)], 
        col = 1:ncol(combined_data) - 1, pch = 20)
+
+
+
+#Adding Stage Labels to Normalization Techniques 
+stage_labels <- data.frame(pathologic_stage_label = kraken_metaCOAD_clean$pathologic_stage_label,
+                           row.names = row.names(kraken_metaCOAD_clean))
+stage_labels <- t(stage_labels)
+#Add Stage Label Function
+add_stage_labels <- function(df, stage_labels) {
+  common_samples <- intersect(colnames(df), colnames(stage_labels))
+  if (length(common_samples) > 0) {
+    # Retain only columns present in both dataframes
+    df <- df[, common_samples]  
+    stage_labels <- stage_labels[, common_samples]
+    # Combine df and stage_labels by row
+    df <- rbind(df, stage_labels)
+    rownames(df)[nrow(df)] <- "stage_label"
+  }
+  return(df)
+}
+
+#Call Function for Each Normalization Technique
+tot_TSS <- add_stage_labels(tot_TSS, stage_labels)
+tot_MED <- add_stage_labels(tot_MED, stage_labels)
+tot_GMPR <- add_stage_labels(tot_GMPR, stage_labels)
+tot_UQ <- add_stage_labels(tot_UQ, stage_labels)
+tot_CSS <- add_stage_labels(tot_CSS, stage_labels)
+tot_DEQ <- add_stage_labels(tot_DEQ, stage_labels)
+tot_RLE <- add_stage_labels(tot_RLE, stage_labels)
+tot_RLEpos <- add_stage_labels(tot_RLEpos, stage_labels)
+tot_TMM <- add_stage_labels(tot_TMM, stage_labels)
+tot_logcpm <- add_stage_labels(tot_logcpm, stage_labels)
+tot_rarefy <- add_stage_labels(tot_rarefy, stage_labels)
+tot_CLR <- add_stage_labels(tot_CLR, stage_labels)
+tot_CLRpos <- add_stage_labels(tot_CLRpos, stage_labels)
+#ILUNC_combat <- add_stage_labels(ILUNC_combat, stage_labels)
+
+
