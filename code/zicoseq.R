@@ -22,7 +22,7 @@ remove_contaminants <- function(df){
 }
 
 
-run_zicoseq <- function(kraken_data, kraken_meta, data_type){
+run_zicoseq <- function(kraken_data, kraken_meta){
   
   # exclude viruses
   kraken_data <- remove_viruses(kraken_data)
@@ -58,9 +58,9 @@ run_zicoseq <- function(kraken_data, kraken_meta, data_type){
   #rownames(zicoseq_data) <- row_names
   
   zicoObj <- ZicoSeq(meta.dat = kraken_meta_sub,  feature.dat = zicoseq_data, grp.name = 'pathologic_stage_label', 
-                     adj.name = NULL, feature.dat.type = data_type, prev.filter = 0, mean.abund.filter = 0,  max.abund.filter = 0, min.prop = 0, 
+                     adj.name = NULL, feature.dat.type = "other", prev.filter = 0, mean.abund.filter = 0,  max.abund.filter = 0, min.prop = 0, 
                      # Winsorization to replace outliers
-                     is.winsor = TRUE, outlier.pct = 0.03, winsor.end = 'top',
+                     is.winsor = TRUE, outlier.pct = 0.1, winsor.end = 'top',
                      # Posterior sampling 
                      is.post.sample = TRUE, post.sample.no = 25, 
                      # Use the identity function
@@ -81,7 +81,7 @@ run_zicoseq <- function(kraken_data, kraken_meta, data_type){
 
 kraken_meta_UNC <- readRDS("data/kraken_meta_norm_filtered.RDS")
 kraken_data_UNC<- readRDS("data/kraken_norm_filtered.RDS")
-result <- run_zicoseq(kraken_data_UNC, kraken_meta_UNC,"other")
+result <- run_zicoseq(kraken_data_UNC, kraken_meta_UNC)
 
 zicoObj <- result$zicoObj
 zicoseq_data <- result$zicoseq_data
@@ -108,7 +108,7 @@ kraken_meta$pathologic_stage_label <- gsub("Stage III([A-C])?", "Stage III", kra
 kraken_meta$pathologic_stage_label <- gsub("Stage II([A-C])?", "Stage II", kraken_meta$pathologic_stage_label)
 kraken_meta$pathologic_stage_label <- gsub("Stage I([A-C])?", "Stage I", kraken_meta$pathologic_stage_label)
 
-result <- run_zicoseq(kraken_data, kraken_meta,"other")
+result <- run_zicoseq(kraken_data, kraken_meta,dat_type ="other", outlier_pct = 0.1)
 
 zicoObj <- result$zicoObj
 zicoseq_data <- result$zicoseq_data
@@ -119,9 +119,10 @@ print(zico_plot)
 
 ggsave("figures/zico_plot_alldata_stagei_vs_stageiv.png", plot = zico_plot, width = 10, height = 6)
 
-## RUN ZICOSEQ ON RAW DATA
+## RUN ZICOSEQ ON RAW DATA - STILL DEBUGGING!!
 
 source("code/clean_kraken_data.R")
+
 
 # import and process datasets of interest
 kraken_meta <- readRDS("data/kraken_metaCOAD.RDS")
@@ -131,7 +132,7 @@ result <- clean_kraken_data(kraken_data, kraken_meta)
 kraken_data <- result$kraken_data
 kraken_meta <- result$kraken_meta
 
-result <- run_zicoseq(kraken_data, kraken_meta,"other")
+result <- run_zicoseq(kraken_data, kraken_meta)
 
 zicoObj <- result$zicoObj
 zicoseq_data <- result$zicoseq_data

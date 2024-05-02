@@ -1,7 +1,23 @@
+#devtools::install_github("wdl2459/ConQuR")install.packages("doParallel")
+#devtools::install_github("wdl2459/ConQuR")
+#BiocManager::install("sva")
+#BiocManager::install("limma")
+#BiocManager::install("metagenomeSeq")
+#BiocManager::install("edgeR")
 
+suppressPackageStartupMessages({
+  library(doParallel) 
+  library(phyloseq)
+  library(DESeq2)
+  library(limma)
+  library(edgeR)
+  library(ConQuR)
+  library(sva)
+  library(metagenomeSeq)
+  library(compositions)
+  library(GUniFrac)
+})
 
-library(phyloseq)
-library(DESeq2)
 
 norm.func <- function(p1,norm_method){
   # remove the all zero genes
