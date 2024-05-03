@@ -100,17 +100,17 @@ for (method in norm_methods) {
   
   # run beta diversity function and make plot
   
-  #distance_matrixes <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
+  distance_matrixes <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
   #print(mean(bray <- distance_matrixes$bray))
   
   #run zico seq function and plot
-  kraken_data <- normalized_dataframes[[method]]
-  result <- run_zicoseq(kraken_data, kraken_meta, filename)
+  
+  #kraken_data <- normalized_dataframes[[method]]
+  #result <- run_zicoseq(kraken_data, kraken_meta, filename)
   
 }
 
-# plot zico 1-4 for all normalized
-# calculate beta diversity for all normalized and plot
+
 # calculate alpha diversity for all normalized and plot
 
 # calculate some metric of similarity between the normalized and the raw matrices and show as heat map
