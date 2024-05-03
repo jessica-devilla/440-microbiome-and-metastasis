@@ -17,6 +17,8 @@ source("code/clean_kraken_data.R")
 source("code/run_norm_func.R")
 source("code/make_phyloseq_obj.R")
 source("code/phyloseq_beta_diversity.R")
+source("code/run_zicoseq.R")
+
 
 
 # import and process datasets of interest
@@ -69,9 +71,13 @@ for (method in norm_methods) {
 
 # Initialize a list to store phyloseq objects
 phyloseq_objects <- list()
+norm_methods <- c("DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR", "CLR_poscounts")
+
+#norm_methods <- c("RLE+", "RLE_poscounts")
+#for (method in names(normalized_dataframes)
 
 # Loop through each normalized data frame
-for (method in names(normalized_dataframes)) {
+for (method in norm_methods) {
   cat(paste("Running method: ", method, "\n"))
   # Create phyloseq object using create_phyloseq function
   physeq <- make_phyloseq_object(normalized_dataframes[[method]], kraken_meta)
@@ -79,9 +85,16 @@ for (method in names(normalized_dataframes)) {
   phyloseq_objects[[method]] <- physeq
   
   filename <- paste0("allsamples_", method)
+  
   # run beta diversity function and make plot
-  distance_matrixes <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
-  print(mean(bray <- distance_matrixes$bray))
+  
+  #distance_matrixes <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
+  #print(mean(bray <- distance_matrixes$bray))
+  
+  #run zico seq function and plot
+  
+  kraken_data <- normalized_dataframes[[method]]
+  result <- run_zicoseq(kraken_data, kraken_meta, filename)
   
 }
 
@@ -90,4 +103,5 @@ for (method in names(normalized_dataframes)) {
 # calculate alpha diversity for all normalized and plot
 
 # calculate some metric of similarity between the normalized and the raw matrices and show as heat map
+
 

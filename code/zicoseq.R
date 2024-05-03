@@ -72,6 +72,8 @@ run_zicoseq <- function(kraken_data, kraken_meta){
                      # Family-wise error rate control
                      is.fwer = TRUE,
                      verbose = TRUE, return.feature.dat = TRUE)
+  
+  
   return(list(zicoObj = zicoObj, zicoseq_data = zicoseq_data))
   
 }
