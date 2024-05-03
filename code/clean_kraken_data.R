@@ -20,6 +20,8 @@ remove_contaminants <- function(df){
 
 clean_kraken_data <- function(kraken_data, kraken_meta){
   
+  #need to remove data where pathologic stage label is not available
+  
   kraken_data <- remove_contaminants(kraken_data)
   kraken_data <- remove_viruses(kraken_data)
   
