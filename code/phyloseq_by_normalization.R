@@ -27,8 +27,8 @@ source("code/run_zicoseq.R")
 kraken_meta <- readRDS("data/kraken_metaCOAD.RDS")
 kraken_data <- readRDS("data/kraken_COAD_raw.RDS")
 
-# UNC DATA
 
+# UNC DATA
 #kraken_meta <- readRDS("data/kraken_meta_norm_filtered.RDS")
 #kraken_data<- readRDS("data/kraken_norm_filtered.RDS") # norm'd
 #kraken_data <-readRDS("data/kraken_raw_filtered.RDS") # raw
@@ -38,6 +38,12 @@ kraken_data <- result$kraken_data
 kraken_meta <- result$kraken_meta
 
 kraken_data_t <- t(kraken_data)
+
+# Poore et al voom snm
+kraken_voom_snm <- readRDS("data/kraken_COAD.RDS")
+kraken_meta_voom <- readRDS("data/kraken_metaCOAD.RDS")
+result_voom <- clean_kraken_data(kraken_voom_snm,kraken_meta_voom)
+kraken_data_voom <- result_voom$kraken_data
 
 ## first run the normalization methods on each dataset
 # List of normalization methods
@@ -66,12 +72,18 @@ for (method in norm_methods) {
   })
 }
 
+# add raw data to dataframe
+normalized_dataframes[["Raw"]]<-kraken_data
+
+#add poore et al voom snm data to dataframe
+normalized_dataframes[["Voom-SNM"]] <- kraken_data_voom
+
 ## then iterate through each normalized dataset
 # create phyloseq object using data and metadata
 
 # Initialize a list to store phyloseq objects
 phyloseq_objects <- list()
-norm_methods <- c("DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR", "CLR_poscounts")
+norm_methods <- c("Raw","Voom-SNM", "DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR", "CLR_poscounts")
 
 #norm_methods <- c("RLE+", "RLE_poscounts")
 #for (method in names(normalized_dataframes)
@@ -92,7 +104,6 @@ for (method in norm_methods) {
   #print(mean(bray <- distance_matrixes$bray))
   
   #run zico seq function and plot
-  
   kraken_data <- normalized_dataframes[[method]]
   result <- run_zicoseq(kraken_data, kraken_meta, filename)
   
@@ -103,5 +114,5 @@ for (method in norm_methods) {
 # calculate alpha diversity for all normalized and plot
 
 # calculate some metric of similarity between the normalized and the raw matrices and show as heat map
-
+# just do euclidean distance to keep it simple
 
