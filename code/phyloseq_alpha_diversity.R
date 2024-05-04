@@ -38,8 +38,7 @@ remove_contaminants <- function(df){
 }
 
 make_phyloseq_object <- function(kraken_data, kraken_meta){
-  kraken_data <- remove_viruses(kraken_data)
-  kraken_data <- remove_contaminants(kraken_data)
+
   kraken_data <- as.matrix(kraken_data)
   
   

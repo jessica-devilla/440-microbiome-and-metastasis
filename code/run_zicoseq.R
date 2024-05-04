@@ -127,8 +127,8 @@ ZicoSeq.plot <- function(ZicoSeq.obj, pvalue.type = c('p.adj.fdr','p.raw','p.adj
     scale_y_continuous(limits = c(0, max(-log10(plot.data$pvals)) * 1.3)) +
     ggrepel::geom_text_repel(data =plot.data_top, aes(label = taxa), max.overlaps = Inf, color = 'black',size=3) +
     labs(x = bquote(R^2), y = paste0('-log10(',pvalue.type,')'),
-         color = ifelse(ZicoSeq.obj$call$feature.dat.type == 'other','Standard deviation','Prevalence'),
-         size = ifelse(ZicoSeq.obj$call$feature.dat.type == 'other','Mean value','Mean abundance')) +
+         color = ifelse(ZicoSeq.obj$call$feature.dat.type == 'other','log(Standard deviation)','Prevalence'),
+         size = ifelse(ZicoSeq.obj$call$feature.dat.type == 'other','Mean abuncance','Mean abundance')) +
     theme_bw() +
     theme(axis.text = element_text(color = 'black', size = text.size),
           axis.title = element_text(color = 'black', size = text.size),
@@ -158,11 +158,11 @@ run_zicoseq <- function(kraken_data, kraken_meta, name){
   # examine dataset
   kraken_mat <- as.matrix(kraken_subset)
   kraken_mat <- as.numeric(kraken_mat)
-  print(typeof(kraken_mat))
+  #print(typeof(kraken_mat))
   zero_count <- sum(kraken_subset == 0) 
-  print(kraken_subset[kraken_subset==0])
+  #print(kraken_subset[kraken_subset==0])
   nan_count <- sum(is.nan(kraken_mat))
-  print(kraken_subset[is.nan(kraken_mat)])
+  #print(kraken_subset[is.nan(kraken_mat)])
   
   
   #remove columns containing all zeroes from dataframe
@@ -199,7 +199,7 @@ run_zicoseq <- function(kraken_data, kraken_meta, name){
                                 out.dir = NULL, width = 15, height = 11)
   
   filename <- paste0("figures/zico_seq/zicoseq_stageivsiv_", name, ".png")
-  ggsave(filename, plot = zico_plot)
+  ggsave(filename, plot = zico_plot,width=7, height=5)
   
   return(list(zicoObj = zicoObj, zicoseq_data = zicoseq_data))
   
