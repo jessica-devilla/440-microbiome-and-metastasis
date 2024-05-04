@@ -4,6 +4,9 @@ colnames(kraken_metaCOAD)[1] <- "id"
 split_metadata_submittingcenter <- split(kraken_metaCOAD, kraken_metaCOAD$data_submitting_center_label)
 unique_centers <- unique(kraken_metaCOAD$data_submitting_center_label)
 
+library(tidyr)
+
+
 for (center in unique_centers) {
   dataset_name <- paste0("kraken_meta_", gsub(" ", "", center)) # Generate a unique variable name
   split_metadata_submittingcenter <- split(kraken_metaCOAD, kraken_metaCOAD$data_submitting_center_label)
@@ -40,13 +43,49 @@ for (center in unique_centers) {
 }
 
 
-#BASED ON PCA ONLY COMBINING UNC AND HARVARD DATA
-comsubmit_spear <- rbind(`spear_Harvard Medical School`, `spear_University of North Carolina`)
-ranksum_spear_submit <- comsubmit_spear  %>%
+library(dplyr)
+
+# Combine datasets and add a dataset column
+comsubmit_spear <- bind_rows(
+  `spear_Harvard Medical School` %>% mutate(dataset = "Harvard Medical School"),
+  `spear_University of North Carolina` %>% mutate(dataset = "University of North Carolina")
+)
+
+# Calculate total rank for each taxa
+ranksum_spear_submit <- comsubmit_spear %>%
   group_by(taxon) %>%
   summarise(total_rank = sum(rank))
 ranksum_spear_submit <- ranksum_spear_submit %>%
-  arrange(total_rank)
+  arrange(total_rank)  # Arrange in descending order of total rank
+
+# Select top N taxa (adjust N as needed)
+top_taxa <- ranksum_spear_submit$taxon[1:5]  # Selecting top 10 taxa
+
+# Filter the combined PCA dataset to include only the top taxa
+subset_data <- comsubmit_spear %>%
+  filter(taxon %in% top_taxa)
+
+
+
+# Create the heatmap plot with adjusted saturation
+heatmap_plot <- ggplot(subset_data, aes(x = factor(taxon, levels = top_taxa), y = dataset, fill = p_adjust)) +
+  geom_tile(color = "white", linewidth = 0.2) +
+  scale_fill_gradient(low = "white", high = "#0D3601", 
+                      limits = c(0.1, 0.3),  # Set the range of values
+                      breaks = seq(0.1, 0.5, 0.05),  # Define breaks for color scale
+                      trans = "sqrt") +  # Adjust saturation with transformation function
+  theme_minimal() +
+  labs(title = "Top Ranking Taxa Across Combined PCA Datasets",
+       x = "Taxa", y = "Dataset", fill = "Correlation") +
+  theme(axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size = 14))
+
+# Save the plot as a PDF with larger dimensions
+pdf("heatmap_plot.pdf", width = 20, height = 10)
+print(heatmap_plot)
+dev.off()
 
 
 #BASED ON PCA ONLY LOOKING AT UNC AND HARVARD SUBMITTING
