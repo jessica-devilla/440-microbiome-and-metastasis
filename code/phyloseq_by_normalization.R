@@ -1,6 +1,7 @@
 
 rm(list = ls(all.names = TRUE))
 
+
 suppressPackageStartupMessages({
   library(readr)
   library(dplyr)
@@ -11,6 +12,8 @@ suppressPackageStartupMessages({
   library(umap)
   library(microbiome)
   library(plyr)
+  library(vegan)
+  library(reshape2)
 })
 
 source("code/clean_kraken_data.R")
@@ -47,7 +50,7 @@ kraken_data_voom <- result_voom$kraken_data
 
 ## first run the normalization methods on each dataset
 # List of normalization methods
-norm_methods <- c("DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "rarefy", "CLR+", "MED", "GMPR", "CLR_poscounts")
+norm_methods <- c("DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "rarefy", "CLR+", "MED", "GMPR")
 
 
 # Initialize a list to store normalized data frames
@@ -83,7 +86,9 @@ normalized_dataframes[["Voom-SNM"]] <- kraken_data_voom
 
 # Initialize a list to store phyloseq objects
 phyloseq_objects <- list()
-norm_methods <- c("Raw","Voom-SNM", "DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR", "CLR_poscounts")
+distance_matrices <- list()
+
+norm_methods <- c("Raw", "Voom-SNM","DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR")
 
 #norm_methods <- c("RLE+", "RLE_poscounts")
 #for (method in names(normalized_dataframes)
@@ -98,12 +103,13 @@ for (method in norm_methods) {
   
   filename <- paste0("allsamples_", method)
   
-  # run beta diversity function and make plot
+  ### run beta diversity function and make plot
   
-  distance_matrixes <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
-  #print(mean(bray <- distance_matrixes$bray))
+  distance_matrix <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
+  # save distance matrices in list
+  distance_matrices[[method]] <- distance_matrix$bray
   
-  #run zico seq function and plot
+  ### run zico seq function and plot
   
   #kraken_data <- normalized_dataframes[[method]]
   #result <- run_zicoseq(kraken_data, kraken_meta, filename)
@@ -113,6 +119,51 @@ for (method in norm_methods) {
 
 # calculate alpha diversity for all normalized and plot
 
-# calculate some metric of similarity between the normalized and the raw matrices and show as heat map
-# just do euclidean distance to keep it simple
+# Calculate mantel statistic via spearman correlation between each distance matrix
 
+# Initialize an empty matrix to store Mantel statistics
+mantel_matrix <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
+rownames(mantel_matrix) <- colnames(mantel_matrix) <- norm_methods
+
+# initialize p value matrix
+pval_matrix <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
+rownames(pval_matrix) <- colnames(pval_matrix) <- norm_methods
+
+norm_methods <- c("Raw", "Voom-SNM","DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR")
+
+for (i in 1:length(norm_methods)) {
+  for (j in 1:length(norm_methods)) {
+    cat(paste("Calculating Mantel correlation of ", norm_methods[i], " by ", norm_methods[j], "\n"))
+    mantel_result <- mantel(distance_matrices[[i]], distance_matrices[[j]], method = "spearman", permutations = 3)
+    mantel_matrix[i, j] <- mantel_result$statistic
+  }
+}
+
+write.table(pval_matrix, file ="data/mantel_pvals.Rdata")
+pval_matrix <- read.table("data/mantel_pvals.Rdata")
+
+write.table(mantel_matrix, file ="data/mantel_mat.Rdata")
+mantel_matrix <- read.table("data/mantel_mat.Rdata")
+
+# plot lower triangle of matrix as a heatmap
+
+matrix_plt <- mantel_matrix
+
+mantel_df <- melt(matrix_plt)
+
+matrix_plt[upper.tri(matrix_plt)]=NA
+mantel_df <- melt(matrix_plt)
+
+
+# Plot the matrix of Mantel statistics
+p <- ggplot(mantel_df, aes(Var1, Var2, fill = value)) +
+  geom_tile(color='gray') +
+  scale_fill_gradient(low = "#FAD2D2", high = "red",na.value = "white") +
+  labs(title = "Mantel Statistic Matrix", x = "Normalization Method", y = "Normalization Method", fill="Mantel Statistic") +
+  scale_x_discrete(labels = norm_methods) +
+  scale_y_discrete(labels = norm_methods)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11),  # Adjust size of x-axis labels
+        axis.text.y = element_text(size = 11))
+print(p)
+
+ggsave("figures/norm_methods_distance_mantel_corr_heatmap.png", plot = p)
