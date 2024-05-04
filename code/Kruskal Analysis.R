@@ -1,4 +1,6 @@
 library(tidyr)
+library(dplyr)
+library(ggplot2)
 
 
 #Prep Voom-SNM Kraken Data
@@ -15,9 +17,13 @@ perform_kruskal_and_plot_abundance <- function(input_df, metadata_df, n_top, out
   #Preparing Data
   colnames(input_df)[1] <- "id"
   colnames(metadata_df)[1] <- "id"
-  input_df <- merge(input_df, metadata_df[c('id','pathologic_stage_label')], by='id',all.x=TRUE)
+  input_df <- merge(input_df, metadata_df[c('id','pathologic_stage_label')], by ='id',all.x=TRUE)
+  if (any(grepl("pathologic_stage_label\\..", colnames(input_df)))) {
+    colnames(input_df) <- make.unique(gsub("pathologic_stage_label\\..*", "pathologic_stage_label", colnames(input_df)))
+  }
   input_df <- input_df[, c("id", "pathologic_stage_label", setdiff(names(input_df), c("id", "pathologic_stage_label")))]
   input_df <- input_df[, -1]
+  input_df <- input_df[, !grepl("pathologic_stage_label\\..*", colnames(input_df))]
   
   
   # Perform Kruskal-Wallis test on each taxon
@@ -52,26 +58,42 @@ perform_kruskal_and_plot_abundance <- function(input_df, metadata_df, n_top, out
     select(pathologic_stage_label, all_of(top_taxa))
   
   filtered_df_long <- filtered_df %>%
-    pivot_longer(cols = -pathologic_stage_label, names_to = "Genus", values_to = "Abundance")
+    pivot_longer(cols = -pathologic_stage_label, names_to = "Genus", values_to = "Abundance", values_drop_na = TRUE)
   
   # Filter the top taxa
   top_taxa_df <- filtered_df_long %>%
     filter(Genus %in% top_taxa)
+  print(top_taxa_df)
   
-  stage_colors <- c("Stage I" = "red", "Stage II" = "blue", "Stage III" = "green", "Stage IV" = "purple")
+  unique_stage_count <- n_distinct(metadata_df$pathologic_stage_label)
+  print(n_distinct(filtered_df_long$pathologic_stage_label))
+  
+  
+  stage_colors <- c("Stage I" = "blue", "Stage II" = "#8070FE", "Stage III" = "#EAB606", "Stage IV" = "#FC4703")
   
   # Reorder the factor levels for pathologic_stage_label
   filtered_df_long$pathologic_stage_label <- factor(filtered_df_long$pathologic_stage_label, levels = c("Stage I", "Stage II", "Stage III", "Stage IV"))
   
   # Create the plot with manual color scale
   plot <- ggplot(top_taxa_df, aes(x = reorder(Genus, match(Genus, kruskal_results_df$taxon)), y = Abundance, color = pathologic_stage_label)) +
-    geom_jitter(position = position_dodge(width = 0.75)) +
-    labs(x = "Genus", y = "Abundance", title = "Abundance of Genus' with Smallest P-Values from Kruskal Test") +
+    geom_boxplot(width = 0.75) +
+    labs(x = "Genus", y = "Abundance", title = NULL) +
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    scale_x_discrete(labels = function(x) gsub("_", " ", x)) +  # Replace "_" with " " in x-axis labels
-    scale_color_manual(values = stage_colors, name = "Tumor Stage", labels = names(stage_colors)) +  
-    theme(legend.position = "top")
+    theme(axis.title.x = element_text(size = 22, margin = margin(t = 20), color = "black"),
+          axis.title.y = element_text(size = 22, margin = margin(r = 15), color="black"),
+          axis.text.x = element_text(margin = margin(t=15), size = 20, color = "black"),  # Increase x-axis label size
+          axis.text.y = element_text(margin = margin(r=15), size = 20, color= "black"),  # Increase y-axis label size
+          axis.line = element_line(color = "black"),  # Change color of axis lines
+          panel.grid = element_blank(),  # Remove all grid lines
+          legend.text = element_text(size = 18),  # Increase legend text size
+          legend.title = element_blank(),  # Increase legend title size
+          legend.position = "right",  # Position legend at the top
+          plot.title = element_text(size = 14),
+          legend.key.size = unit(2, "lines"),  # Increase space between legend elements
+          plot.margin = margin(40, 20, 20, 20)) +  # Increase space below x-axis label and above graph
+    scale_x_discrete(labels = function(x) gsub("_", " ", x)) +  
+    scale_color_manual(values = stage_colors, name = "Tumor Stage", labels = names(stage_colors)) +
+    guides(shape = guide_legend(override.aes = list(size = 40)))
   
   kruskal_results_df$taxon <- gsub("_", " ", kruskal_results_df$taxon)
   
@@ -85,15 +107,15 @@ perform_kruskal_and_plot_abundance <- function(input_df, metadata_df, n_top, out
     ylim(0, NA)  # Ensure y-axis starts at 0
   
   # Save plots to PDF
-  pdf(output_file, width = 12, height = 8)
+  pdf(output_file, width = 20, height = 10)
   print(plot)
   print(plot_p_values)
   dev.off()  # Close PDF device
   
+  
   # Return the top taxa with smallest p-values
-  return(ranked_taxa_df)
+  return(kruskal_results_df %>% select(taxon, rank))
 }
-
 
 # Call the function with your input dataframe, number of top taxa, and desired output file name
 min5_kruskal_voomsnm <- perform_kruskal_and_plot_abundance(input_df = kraken_COAD_genus,
