@@ -50,7 +50,7 @@ kraken_data_voom <- result_voom$kraken_data
 
 ## first run the normalization methods on each dataset
 # List of normalization methods
-norm_methods <- c("DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "rarefy", "CLR+", "MED", "GMPR")
+norm_methods <- c( "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR")
 
 
 # Initialize a list to store normalized data frames
@@ -88,9 +88,9 @@ normalized_dataframes[["Voom-SNM"]] <- kraken_data_voom
 phyloseq_objects <- list()
 distance_matrices <- list()
 
-norm_methods <- c("Raw", "Voom-SNM","DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR")
+norm_methods <- c("Raw", "Voom-SNM", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR")
 
-#norm_methods <- c("RLE+", "RLE_poscounts")
+#norm_methods <- c("Raw", "Voom-SNM")
 #for (method in names(normalized_dataframes)
 
 # Loop through each normalized data frame
@@ -123,47 +123,104 @@ for (method in norm_methods) {
 
 # Initialize an empty matrix to store Mantel statistics
 mantel_matrix <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
-rownames(mantel_matrix) <- colnames(mantel_matrix) <- norm_methods
+rownames(mantel_matrix) <- norm_methods
+colnames(mantel_matrix) <- norm_methods
 
 # initialize p value matrix
 pval_matrix <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
-rownames(pval_matrix) <- colnames(pval_matrix) <- norm_methods
-
-norm_methods <- c("Raw", "Voom-SNM","DeSEQ", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR")
+rownames(pval_matrix) <- norm_methods
+colnames(pval_matrix) <- norm_methods
 
 for (i in 1:length(norm_methods)) {
   for (j in 1:length(norm_methods)) {
     cat(paste("Calculating Mantel correlation of ", norm_methods[i], " by ", norm_methods[j], "\n"))
     mantel_result <- mantel(distance_matrices[[i]], distance_matrices[[j]], method = "spearman", permutations = 3)
     mantel_matrix[i, j] <- mantel_result$statistic
+    print(mantel_result$statistic)
+    print(mantel_result$signif)
+    pval_matrix[i, j] <- mantel_result$signif
   }
 }
 
 write.table(pval_matrix, file ="data/mantel_pvals.Rdata")
-pval_matrix <- read.table("data/mantel_pvals.Rdata")
+#pval_matrix <- read.table("data/mantel_pvals.Rdata")
 
 write.table(mantel_matrix, file ="data/mantel_mat.Rdata")
-mantel_matrix <- read.table("data/mantel_mat.Rdata")
+#mantel_matrix <- read.table("data/mantel_mat.Rdata")
 
 # plot lower triangle of matrix as a heatmap
 
 matrix_plt <- mantel_matrix
 
-mantel_df <- melt(matrix_plt)
-
 matrix_plt[upper.tri(matrix_plt)]=NA
+
 mantel_df <- melt(matrix_plt)
+#mantel_df <- melt(matrix_plt,id.vars=norm_methods)
 
 
 # Plot the matrix of Mantel statistics
 p <- ggplot(mantel_df, aes(Var1, Var2, fill = value)) +
   geom_tile(color='gray') +
-  scale_fill_gradient(low = "#FAD2D2", high = "red",na.value = "white") +
-  labs(title = "Mantel Statistic Matrix", x = "Normalization Method", y = "Normalization Method", fill="Mantel Statistic") +
+  scale_fill_gradient(low = "white", high = "blue",na.value = "white") +
+  labs(title = "Mantel Statistic Matrix", x = "Normalization Method", y = "Normalization Method", fill="Mantel\nStatistic") +
   scale_x_discrete(labels = norm_methods) +
   scale_y_discrete(labels = norm_methods)+
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11),  # Adjust size of x-axis labels
-        axis.text.y = element_text(size = 11))
+        axis.text.y = element_text(size = 13))
 print(p)
 
-ggsave("figures/norm_methods_distance_mantel_corr_heatmap.png", plot = p)
+ggsave("figures/norm_methods_distance_mantel_corr_heatmap_red.pdf", plot = p, width=7, height=7)
+
+
+#mantel_raw <- mantel(distance_matrices[["Raw"]], distance_matrices[["Raw"]], method = "spearman", permutations = 999)
+
+#mantel_voom_raw <- mantel(distance_matrices[["Voom-SNM"]], distance_matrices[["Raw"]], method = "spearman", permutations = 999)
+
+substring<-"Allosalina"
+matching_cols <- grep(substring, colnames(kraken_data), value = TRUE)
+print(matching_cols)
+
+## calculate p values using bootstrapping procedure
+
+# Initialize an empty matrix to store p-values for matrix comparison
+pval_matrix_diff <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
+rownames(pval_matrix_diff) <- norm_methods
+colnames(pval_matrix_diff) <- norm_methods
+
+# Number of permutations
+n_permutations_diff <- 999
+
+for (i in 1:length(norm_methods)) {
+  for (j in 1:length(norm_methods)) {
+    cat(paste("Calculating p-value for comparison between", norm_methods[i], "and", norm_methods[j], "\n"))
+    
+    # If comparing the same matrices, set p-value to 1
+    if (i == j) {
+      pval_matrix_diff[i, j] <- 1
+      next
+    }
+    
+    # Calculate the difference between the distance matrices
+    observed_diff <- abs(as.matrix(distance_matrices[[i]]) - as.matrix(distance_matrices[[j]]))
+    
+    # Perform permutations and calculate difference for each
+    permuted_diffs <- replicate(n_permutations_diff, {
+      permuted_distance_matrix <- as.matrix(distance_matrices[[i]])
+      permuted_distance_matrix <- permuted_distance_matrix[sample(nrow(permuted_distance_matrix)), sample(ncol(permuted_distance_matrix))]
+      
+      permuted_diff <- abs(permuted_distance_matrix - as.matrix(distance_matrices[[j]]))
+      mean(permuted_diff)
+    })
+    print(paste("Mean Permuted Diffs:", mean(permuted_diffs)))
+    
+    # Calculate p-value
+    observed_statistic_diff <- mean(observed_diff)
+    p_value_diff <- mean(permuted_diffs >= observed_statistic_diff)
+    pval_matrix_diff[i, j] <- p_value_diff
+    print(paste("Observed:", observed_statistic_diff))
+    print(paste("Empirical: ",p_value_diff))
+  }
+}
+
+write.table(pval_matrix_diff, file ="data/distmat_pvals.Rdata")
+

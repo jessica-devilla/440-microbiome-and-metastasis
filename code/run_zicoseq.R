@@ -114,7 +114,7 @@ ZicoSeq.plot <- function(ZicoSeq.obj, pvalue.type = c('p.adj.fdr','p.raw','p.adj
   }
   
   if(!is.numeric(meta.dat[,grp.name]) & length(unique(meta.dat[,grp.name])) == 2){
-    title.name = paste0('Differential abundance between ', paste0(base, ' (reference) and ', level2))
+    title.name = paste0('Differential abundance\n ', paste0(base, ' (reference) and ', level2))
   }
   
   pvals <- R2 <- taxa <- NULL
@@ -125,15 +125,15 @@ ZicoSeq.plot <- function(ZicoSeq.obj, pvalue.type = c('p.adj.fdr','p.raw','p.adj
     geom_hline(aes(yintercept = -log10(cutoff)), color = 'gray', linetype = 'dashed') +
     scale_colour_gradient(low = "white", high = "#006D2C") +
     scale_y_continuous(limits = c(0, max(-log10(plot.data$pvals)) * 1.3)) +
-    ggrepel::geom_text_repel(data =plot.data_top, aes(label = taxa), max.overlaps = Inf, color = 'black',size=3) +
+    ggrepel::geom_text_repel(data =plot.data_top, aes(label = taxa), max.overlaps = Inf, color = 'black',size=5) +
     labs(x = bquote(R^2), y = paste0('-log10(',pvalue.type,')'),
          color = ifelse(ZicoSeq.obj$call$feature.dat.type == 'other','log(Standard deviation)','Prevalence'),
          size = ifelse(ZicoSeq.obj$call$feature.dat.type == 'other','Mean abuncance','Mean abundance')) +
     theme_bw() +
-    theme(axis.text = element_text(color = 'black', size = text.size),
-          axis.title = element_text(color = 'black', size = text.size),
-          legend.text = element_text(color = 'black', size = text.size),
-          legend.title = element_text(color = 'black', size = text.size)) +
+    theme(axis.text = element_text(color = 'black', size = 10),
+          axis.title = element_text(color = 'black', size = 10),
+          legend.text = element_text(color = 'black', size = 10),
+          legend.title = element_text(color = 'black', size = 10)) +
     ggtitle(title.name)
   
   
@@ -196,10 +196,10 @@ run_zicoseq <- function(kraken_data, kraken_meta, name){
                      verbose = TRUE, return.feature.dat = TRUE)
   
   zico_plot <- ZicoSeq.plot(zicoObj, pvalue.type = 'p.adj.fdr', cutoff = 0.05, text.size = 10,
-                                out.dir = NULL, width = 15, height = 11)
+                                out.dir = NULL, width = 10, height = 10)
   
   filename <- paste0("figures/zico_seq/zicoseq_stageivsiv_", name, ".png")
-  ggsave(filename, plot = zico_plot,width=7, height=5)
+  ggsave(filename, plot = zico_plot,width=5, height=5)
   
   return(list(zicoObj = zicoObj, zicoseq_data = zicoseq_data))
   

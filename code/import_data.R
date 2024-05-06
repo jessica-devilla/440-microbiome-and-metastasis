@@ -24,7 +24,7 @@ suppressPackageStartupMessages({
 cat("Downloading files from github...\n")
 # import kraken data from poore et al
 kraken_url <- "https://media.githubusercontent.com/media/jessica-devilla/JD_20_440_pset6/main/data/Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv"
-# kraken_data <- read_csv(url(kraken_url),show_col_types = FALSE)
+kraken_data <- read_csv(url(kraken_url),show_col_types = FALSE)
 kraken_df <- as.data.frame(kraken_data, stringsAsFactors = FALSE)
 
 # import kraken metadata from poore et al

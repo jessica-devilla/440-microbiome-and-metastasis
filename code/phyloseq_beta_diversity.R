@@ -55,19 +55,21 @@ physeq_beta_diversity <- function(physeq, dist_methods, name){
   
   df = ldply(plist, function(x) x$data)
   names(df)[1] <- "distance"
-  p = ggplot(df, aes(Axis.1, Axis.2, color=pathologic_stage_label, shape=data_submitting_center_label))+ 
+  p = ggplot(df, aes(Axis.1, Axis.2, color=pathologic_stage_label))+ 
     geom_point(size=2, alpha=0.75) + theme_minimal() +
     facet_wrap(~distance, scales="free") +
     ggtitle("MDS on Bray-Curtus Distance") +
     xlab("NMDS1") +ylab("NMDS2") +
-    scale_color_manual(values = c("#CED5F3", "#8070FE", "#EAB606","#FC4703"))+
-    labs(color="Stage", shape ="Submitting Center")+
-    theme(legend.title = element_text(size = 10),  # Set legend title size
-          legend.text = element_text(size = 8))
+    scale_color_manual(values = c("blue", "#8070FE", "#EAB606","#FC4703"))+
+    labs(color="Stage", shape ="Submitting Center")+ 
+    theme(axis.text = element_text(size = 12), 
+          axis.title = element_text(size = 15),
+          legend.title = element_text(size = 15),
+          legend.text = element_text(size = 13))
   
   #print(p)
   filename <- paste0("figures/beta_diversity/phyloseq_beta_diversity_", name, ".png")
-  ggsave(filename, plot = p,width=7, height=5)
+  ggsave(filename, plot = p,width=5.5, height=5)
   
   return(distance_matrices)
 }
