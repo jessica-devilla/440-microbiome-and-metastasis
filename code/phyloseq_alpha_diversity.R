@@ -24,70 +24,9 @@ suppressPackageStartupMessages({
 
 rm(list = ls(all.names = TRUE))
 
-remove_viruses <- function(df) {
-  virus_columns <- grepl("^k__Viruses", names(df), ignore.case = TRUE)
-  df <- df[, !virus_columns]
-  return(df)
-}
+source("code/make_phyloseq_obj.R")
+source("code/clean_kraken_data.R")
 
-remove_contaminants <- function(df){
-  # Subset the dataframe to exclude contaminant columns
-  contaminant_columns <- grepl("contaminant", names(df), ignore.case = TRUE)
-  df <- df[, !contaminant_columns]
-  
-}
-
-make_phyloseq_object <- function(kraken_data, kraken_meta){
-
-  kraken_data <- as.matrix(kraken_data)
-  
-  
-  # Extract taxonomy levels
-  col_names <- colnames(kraken_data)
-  num_samples <- length(col_names)
-  
-  split_values = strsplit(col_names, split = ".",fixed=TRUE)
-  
-  # Get unique prefixes
-  prefixes <- unique(unlist(lapply(split_values, function(x) gsub("__.*", "", x))))
-  
-  
-  #  initialize matrix
-  taxmat <- matrix("", nrow = length(col_names), ncol = length(prefixes),
-                   dimnames = list(NULL, prefixes))
-  
-  # Fill in the matrix
-  for (i in 1:length(col_names)) {
-    for (j in 1:length(split_values[[i]])) {
-      prefix <- gsub("__.*", "", split_values[[i]][j])
-      value <- gsub("^[^_]+__", "", split_values[[i]][j])
-      taxmat[i, prefix] <- value
-    }
-  }
-  
-  #remove extra columns
-  cols_to_remove <- c("_Incertae_Sedis", "Thermus", "_Incertae_sedis")
-  taxmat <- taxmat[, !(colnames(taxmat) %in% cols_to_remove)]
-  
-  #rename rows and columns
-  new_colnames <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus")
-  colnames(taxmat) <- new_colnames
-  rownames(taxmat) <- paste0("OTU", 1:num_samples)
-  
-  # initialize OTU matrix
-  otumat <- t(kraken_data)
-  rownames(otumat) <- paste0("OTU", 1:num_samples)
-  
-  OTU = otu_table(otumat, taxa_are_rows = TRUE) # OTU matrix
-  TAX = tax_table(taxmat) # taxonomy matrix
-  sampledata = sample_data(as.data.frame(kraken_meta)) #add metadata
-  
-  # create phyloseq object
-  physeq = phyloseq(OTU, TAX, sampledata)
-  
-  return(physeq)
-  
-}
 
 physeq_alpha_diversity <- function(physeq){
   # NOTE - CANNOT CALCULATE ALPHA DIVERISTY WITHOUT RAW COUNTS
@@ -120,8 +59,12 @@ physeq_alpha_diversity <- function(physeq){
 
 mia_alpha_diversity <- function(physeq){
   # convert to tree summarized experiment using mia library and try again
+  cat("making tse object \n")
   tse <- makeTreeSEFromPhyloseq(physeq)
   tse
+  
+  outmat <- as(otu_table(physeq), "matrix")
+  taxmat <- as(tax_table(physeq), "matrix")
   
   # get most abundant feature IDs
   top_taxa <- getTopFeatures(tse, method = "mean", top = 5, assay.type = "counts")
@@ -161,27 +104,44 @@ mia_alpha_diversity <- function(physeq){
   # The colData contains the indices with their code names by default
   #divmat <- colData(tse)[, "LogModSkewness"]
   
-  diversity_plt <- plotColData(tse, "LogModSkewness", "pathologic_stage_label",color_by = "pathologic_stage_label")
+  diversity_plt <- plotColData(tse, "LogModSkewness", "pathologic_stage_label",color_by = "pathologic_stage_label")+
+    scale_color_manual(values = c("blue", "#8070FE", "#EAB606","#FC4703"))+
+    theme(axis.text = element_text(size = 12), 
+          axis.title = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10))
+  
+  
   print(diversity_plt)
   
-  ggsave("figures/mia_logmodskewness_bystage.png", plot = diversity_plt)
+  
+  
+  ggsave("figures/mia_allsamples_logmodskewness_bystage.png", plot = diversity_plt, width=5.5, height=5)
   return(tse)
 }
 
-kraken_meta <- readRDS("data/kraken_meta_norm_filtered.RDS")
+#kraken_meta <- readRDS("data/kraken_meta_norm_filtered.RDS")
 #kraken_data<- readRDS("data/kraken_norm_filtered.RDS")
-kraken_data <-readRDS("data/kraken_raw_filtered.RDS")
+#kraken_data <-readRDS("data/kraken_raw_filtered.RDS")
+
+
+kraken_voom_snm <- readRDS("data/kraken_COAD.RDS")
+kraken_meta_voom <- readRDS("data/kraken_metaCOAD.RDS")
+result_voom <- clean_kraken_data(kraken_voom_snm,kraken_meta_voom)
+kraken_data <- result_voom$kraken_data
+kraken_meta <- result_voom$kraken_meta
 
 
 physeq <- make_phyloseq_object(kraken_data, kraken_meta)
-saveRDS(physeq, 'data/coad_raw_UNC_phyloseq.rds')
+#saveRDS(physeq, 'data/coad_raw_UNC_phyloseq.rds')
 
 # test plot
 plot_bar(physeq, x="pathologic_stage_label", fill="Phylum")
 
 
-mean_sd_alpha_div <- physeq_alpha_diversity(physeq)
-tse <- mia_alpha_diversity
+mean_sd_alpha_div <- physeq_alpha_diversity(physeq) #only works for raw counts data
+
+tse <- mia_alpha_diversity(physeq)
 
 
 

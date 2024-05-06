@@ -1,4 +1,5 @@
 rm(list = ls(all.names = TRUE))
+set.seed(102299)
 
 suppressPackageStartupMessages({
   library(readr)
@@ -19,6 +20,8 @@ suppressPackageStartupMessages({
   library(ggbiplot)
   library(factoextra)
   library(ggrepel)
+  library(umap)
+  library(Rtsne)
 })
 
 source("code/clean_kraken_data.R")
@@ -86,3 +89,58 @@ g <- fviz_pca_biplot(data.pca,
 
 print(g)
 ggsave(path = "figures", filename = "pca_allsamples_bystage_biplot.png", bg='white', width=5.5, height=5)
+
+# Run UMAP
+umap_result <- umap(kraken_pca)
+colnames(umap_result$layout) <- c("UMAP_1", "UMAP_2")
+
+umap_plot <- ggplot(umap_result$layout, aes(x = UMAP_1, y = UMAP_2, color = kraken_meta$pathologic_stage_label)) +
+  geom_point() +
+  labs(x = "UMAP Dimension 1", y = "UMAP Dimension 2", color = "Stage") +
+  scale_color_manual(values = c("blue", "#8070FE", "#EAB606", "#FC4703")) +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))
+
+print(umap_plot)
+ggsave(path = "figures", filename = "umap_allsamples_bystage.png", plot=umap_plot, bg = 'white', width = 5.5, height = 5)
+
+
+
+umap_plot <- ggplot(umap_result$layout, aes(x = UMAP_1, y = UMAP_2, color = kraken_meta$data_submitting_center_label)) +
+  geom_point() +
+  labs(x = "UMAP Dimension 1", y = "UMAP Dimension 2", color = "Submitting \n Center") +
+  #scale_color_manual(values = c("blue", "#8070FE", "#EAB606", "#FC4703")) +
+  #scale_color_manual(values = c("purple", "orange", "#EAB606", "#FC4703"))+
+  theme_minimal() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))
+
+print(umap_plot)
+ggsave(path = "figures", filename = "umap_allsamples_by_submitting_center.png", plot=umap_plot, bg = 'white', width = 6.5, height = 5)
+
+# Run t-SNE
+tsne_result <- Rtsne(kraken_pca)
+
+# Convert t-SNE result to a data frame
+tsne_df <- as.data.frame(tsne_result$Y)
+
+# Plot t-SNE result
+tsne_plot <- ggplot(tsne_df, aes(x = V1, y = V2,color = kraken_meta$pathologic_stage_label)) +
+  geom_point() +
+  labs(x = "t-SNE Dimension 1", y = "t-SNE Dimension 2", color = "Stage") +
+  scale_color_manual(values = c("blue", "#8070FE", "#EAB606", "#FC4703")) +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))
+  
+
+print(tsne_plot)
+ggsave(path = "figures", filename = "tsne_allsamples_bystage.png", plot=tsne_plot, bg = 'white', width = 5.5, height = 5)
+

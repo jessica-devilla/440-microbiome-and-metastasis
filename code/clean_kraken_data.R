@@ -26,6 +26,13 @@ remove_missing_stage_labels <- function(kraken_data, kraken_meta){
   return(list(kraken_data = kraken_data_filtered, kraken_meta = kraken_meta_filtered))
 }
 
+select_primary_tumor <- function(kraken_data, kraken_meta){
+  kraken_meta_filtered <- kraken_meta[kraken_meta$sample_type == "Primary Tumor", ]
+  kraken_data_filtered <- kraken_data[rownames(kraken_data) %in% rownames(kraken_meta_filtered), ]
+  
+  return(list(kraken_data = kraken_data_filtered, kraken_meta = kraken_meta_filtered))
+}
+
 clean_kraken_data <- function(kraken_data, kraken_meta){
   
   #need to remove data where pathologic stage label is not available
@@ -55,6 +62,10 @@ clean_kraken_data <- function(kraken_data, kraken_meta){
   result <- remove_missing_stage_labels(kraken_data, kraken_meta)
   kraken_data <- result$kraken_data
   kraken_meta <- result$kraken_meta
+  
+  result_filt <- select_primary_tumor(kraken_data, kraken_meta)
+  kraken_data <- result_filt$kraken_data
+  kraken_meta <- result_filt$kraken_meta
   
   return(list(kraken_data = kraken_data, kraken_meta = kraken_meta))
 }
