@@ -92,11 +92,32 @@ perform_spearman_and_plot_abundance <- function(input_df, metadata_df, n_top, ou
   print(plot)
   dev.off()  # Close PDF device
   
-  # Print the list of top taxa and their corresponding Spearman coefficients
-  top_taxa_correlation <- spearman_results_df %>%
-    slice_head(n = 25)
-  # Return the top taxa with highest absolute correlation
-  return(spearman_results_df)
+  filtered_df$pathologic_stage_label <- as.numeric(factor(filtered_df$pathologic_stage_label, levels = c("Stage I", "Stage II", "Stage III", "Stage IV")))
+  
+  pearson_correlation <- apply(filtered_df[, -c(1, ncol(filtered_df))], 2, function(x) {
+    cor(filtered_df$pathologic_stage_label, x, method = "pearson")
+  })
+  
+  # Convert results to dataframe
+  pearson_results_df <- data.frame(taxon = names(pearson_correlation), pearson_correlation = unlist(pearson_correlation))
+  
+  # Calculate p-values for Pearson correlation
+  pearson_p_values <- apply(filtered_df[, -c(1, ncol(filtered_df))], 2, function(x) {
+    cor_test_result <- cor.test(filtered_df$pathologic_stage_label, x, method = "pearson", exact = FALSE)
+    return(cor_test_result$p.value)
+  })
+  
+  # Convert p-values to dataframe
+  pearson_p_values_df <- data.frame(taxon = names(pearson_p_values), pearson_p_value = unlist(pearson_p_values))
+  
+  # Adjust p-values using the false discovery rate (FDR) method
+  pearson_p_values_df$pearson_p_adjust <- p.adjust(pearson_p_values_df$pearson_p_value, method = "fdr")
+  print(pearson_p_values_df)
+  # Rank the taxa by their absolute correlation coefficient
+  pearson_results_df <- pearson_results_df %>%
+    mutate(rank = rank(-abs(pearson_correlation)))
+  
+  print(pearson_results_df)
 }
 
 # Call the function with your input dataframe, number of top taxa, and desired output file name
@@ -104,6 +125,10 @@ spear_vnm_total <- perform_spearman_and_plot_abundance(input_df = kraken_COAD_ge
                                                        metadata_df = kraken_meta_COAD_genus,            
                                                        n_top = 5,
                                                        output_file = "totalkraken_voomsnm_absmax5_spearman.pdf")
+
+print(max(kraken_COAD_genus$Oscillatoria))
+
+
 
 library(ggplot2)
 pdf("volcano_spearman.pdf")
