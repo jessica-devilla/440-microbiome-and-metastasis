@@ -46,7 +46,6 @@ print(pca_cos2_plot)
 dev.off()
 
 
-
 #PCA FOR SUBMITTING CENTER
 colnames(kraken_COAD_genus)[1] <- "id"
 colnames(kraken_meta_COAD_genus)[1] <- "id"
