@@ -23,11 +23,11 @@ for (center in unique_centers) {
   output_file <- paste0(kruskal_name, ".pdf")
 
   
-  kruskal <- perform_kruskal_and_plot_abundance(input_df = filtered_kraken,
-                                                metadata_df = split_metadata_submittingcenter[[center]],
-                                                n_top = 5,
-                                                output_file = output_file)
-  assign(kruskal_name, kruskal)
+  #kruskal <- perform_kruskal_and_plot_abundance(input_df = filtered_kraken,
+    #                                            metadata_df = split_metadata_submittingcenter[[center]],
+     #                                           n_top = 5,
+      #                                          output_file = output_file)
+  #assign(kruskal_name, kruskal)
   
   
   spear_name <- paste0("spear_", gsub("","",center))
