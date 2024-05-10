@@ -1,6 +1,8 @@
 #https://github.com/wbb121/Norm-Methods-Comparison/blob/main/helper.R
 
 library(tidyr)
+library(diplyr)
+install.packages("diplyr")
 
 #Filtering/Importing Non-Normalized Data,
 kraken_orig_otu <- Kraken_TCGA_Raw_Data_17625_Samples
@@ -87,8 +89,6 @@ norm.func <- function(p1,norm_method){
   
   # RLE_poscounts, for samples
   # use the non-zero counts to calculate the geometric mean (type="poscounts")
-  # performed normalization on the training data, and then performed addon normalization of the test data onto the training data, 
-  # to ensure that the normalization of the training data does not in any sense depend on the testing data.
   if(norm_method=="RLE_poscounts"){
     require(DESeq2)
     # function for RLE with poscounts estimator normalization
@@ -306,7 +306,7 @@ data_list <- list(
   GMPR = tot_GMPR,
   UQ = tot_UQ,
   CSS = tot_CSS,
-  DEQ = tot_DEQ,
+  #DEQ = tot_DEQ,
   RLE = tot_RLE,
   RLEpos = tot_RLEpos,
   #TMM = tot_TMM,  # Assuming tot_TMM is defined
@@ -363,7 +363,7 @@ tsne_df <- do.call(rbind, Map(function(data, method) {
 # Plot t-SNE visualization
 pdf("tnse_plot_total_playing.pdf", width = 10, height = 10)
 tsne_plot <- ggplot(tsne_df, aes(x = V1, y = V2, color = Method)) +
-  geom_point(size = 0.4) +
+  geom_point(size = 0.6) +
   theme_minimal() +
   theme(
     axis.title.x = element_text(size = 15, margin = margin(t = 10), color = "black"),
@@ -372,13 +372,13 @@ tsne_plot <- ggplot(tsne_df, aes(x = V1, y = V2, color = Method)) +
     axis.text.y = element_text(margin = margin(r = 10), size = 10, color = "black"),
     axis.line = element_line(color = "black"),  # Change color of axis lines
     panel.grid.major = element_blank(),
-    legend.text = element_text(size = 10),  # Increase legend text size
+    legend.text = element_text(size = 15),  # Increase legend text size
     legend.key.size = unit(1, "lines"),  # Increase space between legend elements
     panel.grid.minor = element_blank(), 
-    plot.title = element_text(size = 20, margin = margin(b=10), hjust = 0.5),
-    legend.title =element_blank()) +
-  labs(title = "Normalization Methods T-SNE Visualization")+
-  guides(color = guide_legend(key.width = unit(10, "cm"), key.height = unit(10, "cm"))) # Adjust key size here
+    plot.title = element_text(size = 20, margin = margin(b=10), hjust = 1.2),
+    legend.title = element_text(size = 15, hjust = 0.5)) +  # Adjust the size of the legend title
+  labs(title = "Normalization Methods Visualized with t-SNE ")+
+  guides(color = guide_legend(override.aes = list(size = 6), title = 'Normalization Methods'))  # Adjust the size of legend keys (dots)
 print(tsne_plot)
 dev.off()  # Close the PDF device
 
@@ -386,11 +386,11 @@ dev.off()  # Close the PDF device
 data_list_with_stages <- lapply(data_list, function(df) {
   # Match row names with kraken_metaCOAD_clean
   matched_rows <- intersect(rownames(df), rownames(kraken_metaCOAD_clean))
-
-  # Add stage_label column with corresponding stage labels
-  df$pathologic_stage_label <- kraken_metaCOAD_clean[matched_rows, "pathologic_stage_label"]  
-  # Reorder columns to make stage_label the first column
-  df <- df[, c("pathologic_stage_label", setdiff(colnames(df), "pathologic_stage_label"))]
+  # Add pathologic_stage_label column with corresponding stage labels
+  df$pathologic_stage_label <- kraken_metaCOAD_clean[matched_rows, "pathologic_stage_label"]
+  df$id <- rownames(df)
+  # Reorder columns to make id the first column and pathologic_stage_label the second column
+  df <- df[, c("id", "pathologic_stage_label", setdiff(colnames(df), c("id", "pathologic_stage_label")))]
   
   return(df)
 })
@@ -468,27 +468,26 @@ subset_data <- combined_spearman %>%
 
 # Reorder the 'Method' factor variable
 subset_data$Method <- factor(subset_data$Method, 
-                             levels = c("Raw", "VoomSNM", "DEQ", "GMPR", "UQ", "TSS", 
+                             levels = c("Raw", "VoomSNM", "GMPR", "UQ", "TSS", 
                                         "RLEpos", "MED", "CLR", "CLRpos", "CSS"))
 
 heatmap_plot <- ggplot(subset_data, aes(x = Method, y = factor(taxon, levels = top_taxa), fill = abs(correlation))) +
-  geom_tile(color = "white", linewidth = 0.2) +
+  geom_tile(color = "white", linewidth = 0.1) +  # Adjust the width and height of the tiles
   scale_fill_gradient(low = "#012300", high = "white") +
   theme_minimal() +
-  labs(title = "Taxa with Top Absolute Correlation Across Normalization Techniques",
+  labs(title = expression(paste("Taxa with top Spearman's ", rho, " between Taxon Abundance and Stages Pooled Across Different Normalized Datasets")),
        x = "Normalization Method", y = "Genus", fill = "Correlation") +
-  theme(axis.text.x = element_text(size = 20),
-        axis.title.x = element_text(size = 22, margin = margin(t = 20), color = "black"),
-        axis.title.y = element_text(size = 22, margin = margin(r = 15), color = "black"),
-        axis.text.y = element_text(size = 20),
-        legend.text = element_text(size = 15, hjust = 0.5),  # Increase legend text size
-        legend.title = element_text(size = 22, hjust = 0.5),  # Increase legend title size
-        legend.position = "right",  # Position
-        plot.title = element_text(size = 30, margin = margin(b = 20), hjust = 0.5),
-        legend.key.size = unit(2, "lines"),  # Increase space between legend elements
-        axis.title = element_text(size = 12))
+  theme(axis.text.x = element_text(size = 7),  # Adjust the size of x-axis text
+        axis.title.x = element_text(size = 8, margin = margin(t = 5), color = "black"),  # Adjust the size of x-axis title
+        axis.title.y = element_text(size = 8, margin = margin(r = 2), color = "black"),  # Adjust the size of y-axis title
+        axis.text.y = element_text(size = 7),  # Adjust the size of y-axis text
+        legend.text = element_text(size = 8),  # Adjust the size of legend text
+        legend.title = element_text(size = 8),  # Adjust the size of legend title
+        legend.position = "right",  # Position legend
+        plot.title = element_text(size = 9, margin = margin(b = 5), hjust = 0.5),  # Adjust the size of plot title
+        legend.key.size = unit(1, "lines"))  # Adjust the space between legend elements
 
-pdf("heatmap_spear_normtech.pdf", width = 20, height = 10)
+pdf("heatmap_spear_normtech.pdf", width = 7.5, height = 2)
 print(heatmap_plot)
 dev.off()
 
@@ -496,9 +495,12 @@ dev.off()
 
 
 
+library(ggplot2)
+library(dplyr)
+library(cowplot)
 
-
-
+# Initialize an empty list to store plots
+plot_list <- list()
 
 for (method in names(spearman_results)) {
   current_df <- spearman_results[[method]]
@@ -514,29 +516,50 @@ for (method in names(spearman_results)) {
   volcano_plot_labeled <- ggplot(current_df, aes(x = correlation, y = -log10(p_adjust), color = correlation_sign)) +
     geom_point(alpha = 0.6) +
     geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
-    geom_text(data = top_taxa, aes(label = taxon), hjust = -0.2, vjust = -0.5, size = 4, color = "black", bg = "transparent") +
-    labs(title = bquote(paste("Spearman's ", rho, " between Stage and Genus in ", .(method), " on Tumor Microbiome Data")),
+    geom_text(data = top_taxa, aes(label = taxon), hjust = 0.7, vjust = -0.7, size = 2, color = "black", bg = "transparent") +
+    labs(title = method,
          x = expression(paste("Spearman's ", rho)),
          y = "-log10(Adjusted p-value)",
          color = "Correlation") +
     scale_color_manual(values = c("positive" = "#EAB606", "negative" = "#8070FE"), 
-                       labels = c("positive" = "Positive", "negative" = "Negative")) +
+                       labels = c("positive" = "Positive", "negative" = "Negative"))  +
     theme(
-      plot.title = element_text(size = 10, margin = margin(b=10), hjust = 0.5),
+      plot.title = element_text(size = 15, margin = margin(b=5), hjust = 0.5),
       legend.position = "bottom",
-      axis.line = element_line(color = "black")) +  # Add axis lines for both x and y axes
-    xlim(c(-0.3, 0.3)) +  # Adjust the limits according to your data range
-    theme(panel.background = element_blank())  # Remove plot background
+      legend.title = element_text(size = 12), 
+      legend.key.size = unit(1, "lines"),   # Adjust the size of legend keys
+      legend.text = element_text(size = 12), # Adjust the size of legend text
+      axis.title.y = element_text(size = 15, margin = margin(r = 2), color = "black"),  # Adjust the size of y-axis title
+      axis.title.x = element_text(size = 15, margin = margin(t = 5), color = "black"),  # Adjust the size of x-axis title
+      axis.line = element_line(color = "black")) +  # Set the y-axis limits to be the same for all plots
+    xlim(c(-0.2, 0.2)) +  # Adjust the limits according to your data range
+    theme(panel.background = element_blank())  +
+    guides(color = guide_legend(override.aes = list(size = 4)))  # Adjust the size of legend keys (dots)
+  # Remove plot background
   
+  if (method == 'GMPR' | method == 'CLR' | method == 'UQ' | method == 'TSS') {
+    plot_list[[method]] <- volcano_plot_labeled
+  }
   # Print the plot
   print(volcano_plot_labeled)
   
   dev.off()
   
 }
-  
-  
-  
 
+# Calculate the y-axis limits based on the data
+y_limits <- range(unlist(lapply(plot_list, function(p) p$data$`-log10(p_adjust)`)), na.rm = TRUE)
 
+# Specify breaks and labels for y-axis
+y_breaks <- seq(0, 1.5, by = 0.1)
+y_labels <- seq(0, 1.5, by = 0.1)
 
+# Add custom y-axis breaks, labels, and limits for each plot
+for (i in 1:length(plot_list)) {
+  plot_list[[i]] <- plot_list[[i]] + 
+    scale_y_continuous(breaks = y_breaks, labels = y_labels, limits = y_limits)
+}
+
+# Arrange plots side by side
+combined_plot_spear_significant <- grid.arrange(grobs = plot_list, ncol = 4) 
+ggsave("spearnormplots_pres.pdf", combined_plot_spear_significant, width = 15, height = 8)
