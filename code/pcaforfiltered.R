@@ -72,4 +72,28 @@ pdf("pca_krakendatasubmit_elipse.pdf")
 print(pca_cos2_plot)
 dev.off()
 
+data2.pca <- prcomp(krakenpca_total, center = FALSE, scale = FALSE)
+pca_data <- data.frame(data2.pca$x[, 1:2])  # Extract the first two principal components
+pca_data$group <- kraken_merge$data_submitting_center_label
+
+# Define custom colors for each group while keeping the same color scheme
+custom_colors <- c("red", "#008000", "#6EB5FF")
+
+# Map custom colors to each group
+color_map <- custom_colors[match(unique(pca_data$group), unique(pca_data$group))]
+
+# Create outline colors based on the custom color mapping
+pca_data$outline_color <- color_map[as.numeric(factor(pca_data$group))]
+
+# Plot PCA
+pca_cos2_plot <- ggplot(pca_data, aes(PC1, PC2, color = group)) +
+  stat_ellipse(aes(group = group, color = outline_color, fill = outline_color), type = "norm", geom = "polygon", alpha = 0.2) +
+  scale_color_manual(values = color_map, guide = "none") +  # Specify custom colors
+  scale_fill_manual(values = color_map, name = "Location", labels = unique(pca_data$group)) +  # Specify legend labels
+  theme_minimal()
+
+# Save plot to PDF
+pdf("pca_krakendatasubmit_elipse.pdf")
+print(pca_cos2_plot)
+dev.off()
 
