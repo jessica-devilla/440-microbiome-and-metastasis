@@ -102,7 +102,13 @@ p <- ggplot() +
   theme_minimal() +
   theme(legend.position = "none")+
   scale_color_manual(values = c("blue", "#8070FE", "#EAB606","#FC4703"))+
-  theme(axis.text = element_text(size = 12),axis.title = element_text(size = 12)) 
+  theme(legend.position = "none",
+        axis.text = element_text(size = 12, color = "black"),
+        axis.title = element_text(size = 12, color = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(color = "black"),
+        axis.ticks = element_line(color = "black"))
 
 print(p)
 ggsave(path = "figures", filename = "total_bacterial_abundance_jitter.png", bg='white')

@@ -99,7 +99,8 @@ umap_plot <- ggplot(umap_result$layout, aes(x = UMAP_1, y = UMAP_2, color = krak
   labs(x = "UMAP Dimension 1", y = "UMAP Dimension 2", color = "Stage") +
   scale_color_manual(values = c("blue", "#8070FE", "#EAB606", "#FC4703")) +
   theme_minimal() +
-  theme(axis.text = element_text(size = 12), 
+  theme(legend.position = "none",
+        axis.text = element_text(size = 12), 
         axis.title = element_text(size = 12),
         legend.title = element_text(size = 12),
         legend.text = element_text(size = 10))
@@ -113,9 +114,10 @@ umap_plot <- ggplot(umap_result$layout, aes(x = UMAP_1, y = UMAP_2, color = krak
   geom_point() +
   labs(x = "UMAP Dimension 1", y = "UMAP Dimension 2", color = "Submitting \n Center") +
   #scale_color_manual(values = c("blue", "#8070FE", "#EAB606", "#FC4703")) +
-  #scale_color_manual(values = c("purple", "orange", "#EAB606", "#FC4703"))+
+  scale_color_manual(values = c("#9dc1de", "#f29292", "#a9d8a7"))+
   theme_minimal() +
-  theme(axis.text = element_text(size = 12), 
+  theme(legend.position = "none",
+        axis.text = element_text(size = 12), 
         axis.title = element_text(size = 12),
         legend.title = element_text(size = 12),
         legend.text = element_text(size = 10))

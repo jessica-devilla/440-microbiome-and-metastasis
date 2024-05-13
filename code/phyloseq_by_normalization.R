@@ -21,6 +21,7 @@ source("code/run_norm_func.R")
 source("code/make_phyloseq_obj.R")
 source("code/phyloseq_beta_diversity.R")
 source("code/run_zicoseq.R")
+#source("code/run_zicoseq_og_plotting.R")
 
 
 
@@ -50,7 +51,8 @@ kraken_data_voom <- result_voom$kraken_data
 
 ## first run the normalization methods on each dataset
 # List of normalization methods
-norm_methods <- c( "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR")
+norm_methods <- c( "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR","DeSEQ")
+
 
 
 # Initialize a list to store normalized data frames
@@ -88,9 +90,9 @@ normalized_dataframes[["Voom-SNM"]] <- kraken_data_voom
 phyloseq_objects <- list()
 distance_matrices <- list()
 
-norm_methods <- c("Raw", "Voom-SNM", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR")
+norm_methods <- c("Raw", "Voom-SNM", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR","DeSEQ")
 
-#norm_methods <- c("Raw", "Voom-SNM")
+norm_methods <- c("Voom-SNM")
 #for (method in names(normalized_dataframes)
 
 # Loop through each normalized data frame
@@ -105,28 +107,33 @@ for (method in norm_methods) {
   
   ### run beta diversity function and make plot
   
-  distance_matrix <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
+  #distance_matrix <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
   # save distance matrices in list
-  distance_matrices[[method]] <- distance_matrix$bray
+  #distance_matrices[[method]] <- distance_matrix$bray
   
   ### run zico seq function and plot
   
-  #kraken_data <- normalized_dataframes[[method]]
-  #result <- run_zicoseq(kraken_data, kraken_meta, filename)
+  kraken_data <- normalized_dataframes[[method]]
+  result <- run_zicoseq(kraken_data, kraken_meta, filename)
   
 }
 
+zicoObj <- result$zicoObj
+pvals <- zicoObj$p.adj.fdr
 
 # calculate alpha diversity for all normalized and plot
 
 # Calculate mantel statistic via spearman correlation between each distance matrix
 
+norm_methods <- c("Raw", "Voom-SNM", "RLE+", "RLE_poscounts", "logcpm","MED", "TSS", "UQ", "CSS",'CLR_poscounts',  "CLR+", "GMPR")
+
+
+
 # Initialize an empty matrix to store Mantel statistics
 mantel_matrix <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
 rownames(mantel_matrix) <- norm_methods
 colnames(mantel_matrix) <- norm_methods
-
-# initialize p value matrix
+-=# initialize p value matrix
 pval_matrix <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
 rownames(pval_matrix) <- norm_methods
 colnames(pval_matrix) <- norm_methods
@@ -165,11 +172,11 @@ p <- ggplot(mantel_df, aes(Var1, Var2, fill = value)) +
   labs(title = "Mantel Statistic Matrix", x = "Normalization Method", y = "Normalization Method", fill="Mantel\nStatistic") +
   scale_x_discrete(labels = norm_methods) +
   scale_y_discrete(labels = norm_methods)+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11),  # Adjust size of x-axis labels
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 13),  # Adjust size of x-axis labels
         axis.text.y = element_text(size = 13))
 print(p)
 
-ggsave("figures/norm_methods_distance_mantel_corr_heatmap_red.pdf", plot = p, width=7, height=7)
+ggsave("figures/norm_methods_distance_mantel_corr_heatmap_blue_ordered.pdf", plot = p, width=7, height=7)
 
 
 #mantel_raw <- mantel(distance_matrices[["Raw"]], distance_matrices[["Raw"]], method = "spearman", permutations = 999)
