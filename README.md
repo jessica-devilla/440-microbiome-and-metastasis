@@ -2,19 +2,26 @@
 
 Jessica Devilla and Grace Goetz
 
-Data sources
+	Metastasis is a dynamic and multi-step process by which cancer gains features that allow for invasion of distance sites. Several factors are thought to play a role including tumor immunosuppression mechanisms, metastasis-driving mutations, and phenotypic plasticity, however the mechanistic biology of metastasis is largely unknown. Recently, the intratumoral microbiota has emerged as a driver of cancer progression, and has been utilized in machine learning models to distinguish healthy vs. tumor samples, treatment outcomes, and overall cancer prognosis with impressive predictive power. Ultimately, the use of the cancer-associated microbiome offers a clinical opportunity to predict metastatic spread of cancer and can potentially be modulated to prevent formation of pre-metastatic niches. Given the privileged role of the microbiome in the colon, the high burden of colorectal cancer globally, and association with high rates of metastasis, we chose to examine the impact of the intra-tumoral microbiome on colon adenocarcinoma (COAD). To accomplish this, we used a dataset of genus-level microbial signatures extracted from RNA sequencing and Whole Genome Sequencing data from primary COAD tumors within The Cancer Genome Atlas (TCGA). We found that while there were no global differences in the structure of the microbiome, the abundance of individual strains did vary between stages of COAD. In particular, we found that abundance of Oscillatoria was negatively correlated with progression from stage one to four and was significantly more abundant in stage one tumors. This relationship was conserved across datasets derived from different locations as well as datasets processed using different normalization methods. Taken together with previous studies which suggest Oscillatoria may play a role in  epithelial-to-mesenchymal transition, these results suggest that Oscillatoria may be a strong candidate for diagnostic or therapeutic intervention of metastasis. 
+
+## Data
 Poore GD, Kopylova E, Zhu Q, et al. Microbiome analyses of blood and tissues suggest cancer diagnostic approach. Nature. 2020;579(7800):567-574. doi:10.1038/s41586-020-2095-1
 - https://ftp.microbio.me/pub/cancer_microbiome_analysis/TCGA/ 
 - https://github.com/biocore/tcga
 
-Hermida LC, Gertz EM, Ruppin E. Predicting cancer prognosis and drug response from the tumor microbiome. Nat Commun. 2022;13(1):2896. doi:10.1038/s41467-022-30512-3
-- https://zenodo.org/records/6471321
-- https://github.com/ruppinlab/tcga-microbiome-prediction/tree/v1.2
+The data contained in the data folder of this repo represents the normalized microbial abudance measurements for a range of cancer types (Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv) and corresponding metadata (Metadata-TCGA-Kraken-17625-Samples.csv). This data has been run through a pipeline called Kraken to allow for microbial taxonomy identification and Voom-SNM, a normalization and decontamination process. The result is a csv with values for microbial abundance for each species
 
-Citation for TCGA Biolinks
-- Colaprico, Antonio, et al. “TCGAbiolinks: an R/Bioconductor package for integrative analysis of TCGA data.” Nucleic acids research 44.8 (2015): e71-e71.
-- Silva, Tiago C., et al. “TCGA Workflow: Analyze cancer genomics and epigenomics data using Bioconductor packages.” F1000Research 5 (2016). (https://f1000research.com/articles/5-1542/v2)
-- Mounir, Mohamed, et al. “New functionalities in the TCGAbiolinks package for the study and integration of cancer data from GDC and GTEx.” PLoS computational biology 15.3 (2019): e1006701. (https://doi.org/10.1371/journal.pcbi.1006701)
+
+## Folder Structure
+
+```
+440-microbiome-and-metastasis/
+|__ README.md							
+|__ code/				
+|__ data/						
+|__ figures/
+```
+
 
 Clone the github repository into desired directory using Git Bash. 
 
@@ -24,10 +31,10 @@ git clone https://github.com/jessica-devilla/440-microbiome-and-metastasis.git
 
 After cloning the repository, you may need to make the R script executable. Run the following command in the terminal from the root of the cloned repository:
 ```bash
-chmod +x ./code/impot_data.R
+chmod +x ./code/import_data.R
 ```
 
-To import Poore et al data and save R data files to your local machine, run:
+All code to generate figures can be found in the code folder. Each script can be run from bash shell as follows:
 
 ```bash
 Rscript code/import_data.R
