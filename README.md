@@ -45,3 +45,5 @@ All code to generate figures can be found in the code folder. Each script can be
 ```bash
 Rscript code/import_data.R
 ```
+
+import_data.R should be run locally before running additional analysis. This script reads data into R and saves R data files for relevants datasets to the local data folder. They are not included in the repo due to storage requirements.  
