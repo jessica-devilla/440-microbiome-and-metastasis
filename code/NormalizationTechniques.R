@@ -359,11 +359,20 @@ tsne_df <- do.call(rbind, Map(function(data, method) {
   data.frame(V1 = data[,1], V2 = data[,2], Method = method)
 }, tsne_list, names(tsne_list)))
 
+library(viridis)  
+library(RColorBrewer)  # Load the RColorBrewer package
+
+# Create a purple color palette with 10 distinct colors
+purple_palette <- brewer.pal(12, "PuRd")
 # Plot t-SNE visualization
-# Plot t-SNE visualization
-pdf("tnse_plot_total_playing.pdf", width = 10, height = 10)
+
+pdf("tnse_plot_total_playing2.pdf", width = 10, height = 10)
+
+
+# Create the plot with the purple color palette
 tsne_plot <- ggplot(tsne_df, aes(x = V1, y = V2, color = Method)) +
   geom_point(size = 0.6) +
+  scale_color_manual(values = purple_palette) +  # Use the purple color palette
   theme_minimal() +
   theme(
     axis.title.x = element_text(size = 15, margin = margin(t = 10), color = "black"),
@@ -379,8 +388,12 @@ tsne_plot <- ggplot(tsne_df, aes(x = V1, y = V2, color = Method)) +
     legend.title = element_text(size = 15, hjust = 0.5)) +  # Adjust the size of the legend title
   labs(title = "Normalization Methods Visualized with t-SNE ")+
   guides(color = guide_legend(override.aes = list(size = 6), title = 'Normalization Methods'))  # Adjust the size of legend keys (dots)
+
+# Print the plot
 print(tsne_plot)
-dev.off()  # Close the PDF device
+
+# Close the PDF device
+dev.off()
 
 
 data_list_with_stages <- lapply(data_list, function(df) {
