@@ -92,11 +92,45 @@ perform_spearman_and_plot_abundance <- function(input_df, metadata_df, n_top, ou
   print(plot)
   dev.off()  # Close PDF device
   
-  # Print the list of top taxa and their corresponding Spearman coefficients
-  top_taxa_correlation <- spearman_results_df %>%
-    slice_head(n = 25)
-  # Return the top taxa with highest absolute correlation
+  filtered_df$pathologic_stage_label <- as.numeric(factor(filtered_df$pathologic_stage_label, levels = c("Stage I", "Stage II", "Stage III", "Stage IV")))
+  
+  top_taxa <- spearman_results_df %>%
+    slice_head(n=2)
+  spearman_results_df$correlation_sign <- ifelse(spearman_results_df$correlation > 0, "positive", "negative")
+  print(spearman_results_df)
+  # Volcano plot with labeled top ranked taxa
+  volcano_plot_labeled <- ggplot(spearman_results_df, aes(x = correlation, y = -log10(p_adjust), color = correlation_sign)) +
+    geom_point(alpha = 0.9) +
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
+    geom_text(data = top_taxa, aes(label = taxon), hjust = 0.5, vjust = -0.7, size = 5, color = "black") +
+    labs(title = expression(paste("Spearman's ", rho, " Correlation between Stage I and IV and Genus Abundance")),
+         x = expression(paste("Spearman's ", rho)),
+         y = "-log10(Adjusted p-value)",
+         color = "Correlation") +
+    scale_color_manual(values = c("positive" = "#EAB606", "negative" = "#006400"), 
+                       labels = c("positive" = "Positive", "negative" = "Negative"))  +
+    theme(
+      plot.title = element_text(size = 15, margin = margin(b=5), hjust = 0.9),
+      legend.position = "right",
+      legend.title = element_text(size = 12), 
+      legend.key.size = unit(1, "lines"),   # Adjust the size of legend keys
+      legend.text = element_text(size = 12), # Adjust the size of legend text
+      axis.title.y = element_text(size = 15, margin = margin(r = 2), color = "black"),  # Adjust the size of y-axis title
+      axis.title.x = element_text(size = 15, margin = margin(t = 5), color = "black"),  # Adjust the size of x-axis title
+      axis.line = element_line(color = "black"),
+      plot.margin = margin(15, 10, 10, 10)) +  # Increase space below x-axis label and above graph
+    xlim(c(-0.3, 0.3)) +  # Adjust the limits according to your data range
+    theme(panel.background = element_blank())  +
+    guides(color = guide_legend(override.aes = list(size = 4))) 
+  pdf(output_file, width = 5, height = 6)
+  print(volcano_plot_labeled)
+    
+  dev.off()
+    
   return(spearman_results_df)
+  
+  
+ 
 }
 
 # Call the function with your input dataframe, number of top taxa, and desired output file name
@@ -104,6 +138,10 @@ spear_vnm_total <- perform_spearman_and_plot_abundance(input_df = kraken_COAD_ge
                                                        metadata_df = kraken_meta_COAD_genus,            
                                                        n_top = 5,
                                                        output_file = "totalkraken_voomsnm_absmax5_spearman.pdf")
+
+print(max(kraken_COAD_genus$Oscillatoria))
+
+
 
 library(ggplot2)
 pdf("volcano_spearman.pdf")
