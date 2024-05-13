@@ -1,7 +1,7 @@
-
+# clean environment
 rm(list = ls(all.names = TRUE))
 
-
+# import packages
 suppressPackageStartupMessages({
   library(readr)
   library(dplyr)
@@ -16,6 +16,7 @@ suppressPackageStartupMessages({
   library(reshape2)
 })
 
+#import functions
 source("code/clean_kraken_data.R")
 source("code/run_norm_func.R")
 source("code/make_phyloseq_obj.R")
@@ -26,7 +27,7 @@ source("code/run_zicoseq.R")
 
 # import and process datasets of interest
 
-#RAW DATA - NORMS NOT WORKING YET
+#RAW DATA
 kraken_meta <- readRDS("data/kraken_metaCOAD.RDS")
 kraken_data <- readRDS("data/kraken_COAD_raw.RDS")
 
@@ -36,13 +37,14 @@ kraken_data <- readRDS("data/kraken_COAD_raw.RDS")
 #kraken_data<- readRDS("data/kraken_norm_filtered.RDS") # norm'd
 #kraken_data <-readRDS("data/kraken_raw_filtered.RDS") # raw
 
+# clean data
 result <- clean_kraken_data(kraken_data, kraken_meta)
 kraken_data <- result$kraken_data
 kraken_meta <- result$kraken_meta
 
 kraken_data_t <- t(kraken_data)
 
-# Poore et al voom snm
+# import Poore et al voom snm
 kraken_voom_snm <- readRDS("data/kraken_COAD.RDS")
 kraken_meta_voom <- readRDS("data/kraken_metaCOAD.RDS")
 result_voom <- clean_kraken_data(kraken_voom_snm,kraken_meta_voom)
@@ -89,9 +91,10 @@ normalized_dataframes[["Voom-SNM"]] <- kraken_data_voom
 phyloseq_objects <- list()
 distance_matrices <- list()
 
+# redefine norm_methods with raw and voom
 norm_methods <- c("Raw", "Voom-SNM", "RLE+", "RLE_poscounts", "TSS", "UQ", "CSS",'CLR_poscounts', "logcpm", "CLR+", "MED", "GMPR","DeSEQ")
 
-norm_methods <- c("Voom-SNM")
+#norm_methods <- c("Voom-SNM")
 #for (method in names(normalized_dataframes)
 
 # Loop through each normalized data frame
@@ -104,11 +107,10 @@ for (method in norm_methods) {
   
   filename <- paste0("allsamples_", method)
   
-  ### run beta diversity function and make plot
+  ### run beta diversity function and plot
   
-  #distance_matrix <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
-  save distance matrices in list
-  distance_matrices[[method]] <- distance_matrix$bray
+  distance_matrix <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
+  distance_matrices[[method]] <- distance_matrix$bray #save distances matrices to list
   
   ### run zico seq function and plot
   
@@ -117,16 +119,13 @@ for (method in norm_methods) {
   
 }
 
+# test extract p values from zicoobject
 zicoObj <- result$zicoObj
 pvals <- zicoObj$p.adj.fdr
-
-# calculate alpha diversity for all normalized and plot
 
 # Calculate mantel statistic via spearman correlation between each distance matrix
 
 norm_methods <- c("Raw", "Voom-SNM", "RLE+", "RLE_poscounts", "logcpm","MED", "TSS", "UQ", "CSS",'CLR_poscounts',  "CLR+", "GMPR")
-
-
 
 # Initialize an empty matrix to store Mantel statistics
 mantel_matrix <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
@@ -137,29 +136,30 @@ pval_matrix <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_method
 rownames(pval_matrix) <- norm_methods
 colnames(pval_matrix) <- norm_methods
 
+# loop through all comparisons of norm methods
 for (i in 1:length(norm_methods)) {
   for (j in 1:length(norm_methods)) {
     cat(paste("Calculating Mantel correlation of ", norm_methods[i], " by ", norm_methods[j], "\n"))
+    #get mantel test statistic
     mantel_result <- mantel(distance_matrices[[i]], distance_matrices[[j]], method = "spearman", permutations = 3) #decrease permutations for speed
+    # add test statistic and significance to matrices
     mantel_matrix[i, j] <- mantel_result$statistic
-    print(mantel_result$statistic)
-    print(mantel_result$signif)
     pval_matrix[i, j] <- mantel_result$signif
+    #print(mantel_result$statistic)
+    #print(mantel_result$signif)
   }
 }
 
-write.table(pval_matrix, file ="data/mantel_pvals.Rdata")
+write.table(pval_matrix, file ="data/mantel_pvals.Rdata") #save
 #pval_matrix <- read.table("data/mantel_pvals.Rdata")
 
-write.table(mantel_matrix, file ="data/mantel_mat.Rdata")
+write.table(mantel_matrix, file ="data/mantel_mat.Rdata") #save
 #mantel_matrix <- read.table("data/mantel_mat.Rdata")
 
-# plot lower triangle of matrix as a heatmap
+# plot only the lower triangle of matrix as a heatmap
 
 matrix_plt <- mantel_matrix
-
 matrix_plt[upper.tri(matrix_plt)]=NA
-
 mantel_df <- melt(matrix_plt)
 #mantel_df <- melt(matrix_plt,id.vars=norm_methods)
 
@@ -178,15 +178,7 @@ print(p)
 ggsave("figures/norm_methods_distance_mantel_corr_heatmap_blue_ordered.pdf", plot = p, width=7, height=7)
 
 
-#mantel_raw <- mantel(distance_matrices[["Raw"]], distance_matrices[["Raw"]], method = "spearman", permutations = 999)
-
-#mantel_voom_raw <- mantel(distance_matrices[["Voom-SNM"]], distance_matrices[["Raw"]], method = "spearman", permutations = 999)
-
-substring<-"Allosalina"
-matching_cols <- grep(substring, colnames(kraken_data), value = TRUE)
-print(matching_cols)
-
-## calculate p values using bootstrapping procedure
+## calculate p values of comparisons of distance matrices using bootstrapping procedure
 
 # Initialize an empty matrix to store p-values for matrix comparison
 pval_matrix_diff <- matrix(NA, nrow = length(norm_methods), ncol = length(norm_methods))
@@ -228,5 +220,5 @@ for (i in 1:length(norm_methods)) {
   }
 }
 
-write.table(pval_matrix_diff, file ="data/distmat_pvals.Rdata")
+write.table(pval_matrix_diff, file ="data/distmat_pvals.Rdata") #save
 
