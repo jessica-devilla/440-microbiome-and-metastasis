@@ -94,30 +94,43 @@ perform_spearman_and_plot_abundance <- function(input_df, metadata_df, n_top, ou
   
   filtered_df$pathologic_stage_label <- as.numeric(factor(filtered_df$pathologic_stage_label, levels = c("Stage I", "Stage II", "Stage III", "Stage IV")))
   
-  pearson_correlation <- apply(filtered_df[, -c(1, ncol(filtered_df))], 2, function(x) {
-    cor(filtered_df$pathologic_stage_label, x, method = "pearson")
-  })
+  top_taxa <- spearman_results_df %>%
+    slice_head(n=2)
+  spearman_results_df$correlation_sign <- ifelse(spearman_results_df$correlation > 0, "positive", "negative")
+  print(spearman_results_df)
+  # Volcano plot with labeled top ranked taxa
+  volcano_plot_labeled <- ggplot(spearman_results_df, aes(x = correlation, y = -log10(p_adjust), color = correlation_sign)) +
+    geom_point(alpha = 0.9) +
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
+    geom_text(data = top_taxa, aes(label = taxon), hjust = 0.5, vjust = -0.7, size = 5, color = "black") +
+    labs(title = expression(paste("Spearman's ", rho, " Correlation between Stage I and IV and Genus Abundance")),
+         x = expression(paste("Spearman's ", rho)),
+         y = "-log10(Adjusted p-value)",
+         color = "Correlation") +
+    scale_color_manual(values = c("positive" = "#EAB606", "negative" = "#006400"), 
+                       labels = c("positive" = "Positive", "negative" = "Negative"))  +
+    theme(
+      plot.title = element_text(size = 15, margin = margin(b=5), hjust = 0.9),
+      legend.position = "right",
+      legend.title = element_text(size = 12), 
+      legend.key.size = unit(1, "lines"),   # Adjust the size of legend keys
+      legend.text = element_text(size = 12), # Adjust the size of legend text
+      axis.title.y = element_text(size = 15, margin = margin(r = 2), color = "black"),  # Adjust the size of y-axis title
+      axis.title.x = element_text(size = 15, margin = margin(t = 5), color = "black"),  # Adjust the size of x-axis title
+      axis.line = element_line(color = "black"),
+      plot.margin = margin(15, 10, 10, 10)) +  # Increase space below x-axis label and above graph
+    xlim(c(-0.3, 0.3)) +  # Adjust the limits according to your data range
+    theme(panel.background = element_blank())  +
+    guides(color = guide_legend(override.aes = list(size = 4))) 
+  pdf(output_file, width = 5, height = 6)
+  print(volcano_plot_labeled)
+    
+  dev.off()
+    
+  return(spearman_results_df)
   
-  # Convert results to dataframe
-  pearson_results_df <- data.frame(taxon = names(pearson_correlation), pearson_correlation = unlist(pearson_correlation))
   
-  # Calculate p-values for Pearson correlation
-  pearson_p_values <- apply(filtered_df[, -c(1, ncol(filtered_df))], 2, function(x) {
-    cor_test_result <- cor.test(filtered_df$pathologic_stage_label, x, method = "pearson", exact = FALSE)
-    return(cor_test_result$p.value)
-  })
-  
-  # Convert p-values to dataframe
-  pearson_p_values_df <- data.frame(taxon = names(pearson_p_values), pearson_p_value = unlist(pearson_p_values))
-  
-  # Adjust p-values using the false discovery rate (FDR) method
-  pearson_p_values_df$pearson_p_adjust <- p.adjust(pearson_p_values_df$pearson_p_value, method = "fdr")
-  print(pearson_p_values_df)
-  # Rank the taxa by their absolute correlation coefficient
-  pearson_results_df <- pearson_results_df %>%
-    mutate(rank = rank(-abs(pearson_correlation)))
-  
-  print(pearson_results_df)
+ 
 }
 
 # Call the function with your input dataframe, number of top taxa, and desired output file name
