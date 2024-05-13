@@ -47,3 +47,35 @@ Rscript code/import_data.R
 ```
 
 import_data.R should be run locally before running additional analysis. This script reads data into R and saves R data files for relevants datasets to the local data folder. They are not included in the repo due to storage requirements.  
+
+The relevant code for generating paper figures are as follows: 
+
+Figure 1: 
+```bash
+Rscript code/pca_by_phylum_family_genus.R
+Rscript code/clusering_bacterial_abundance.R
+Rscript code/total_abundances_by_stage.R
+Rscript code/phyloseq_alpha_diversity.R
+```
+
+Figure 2:
+```bash
+
+Rscript code/zicoseq.R
+```
+
+Figure 3:
+```bash
+
+Rscript code/voom_snm_analysis_figs.R
+```
+
+Figure 4:
+```bash
+Rscript code/phyloseq_by_normalization.R
+```
+
+Figure 5:
+```bash
+
+```
