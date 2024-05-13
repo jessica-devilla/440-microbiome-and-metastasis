@@ -1,4 +1,4 @@
-
+#install packages
 if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
@@ -10,7 +10,7 @@ BiocManager::install("mia")
 
 BiocManager::install("microbiome")
 
-
+# load relevant packages
 suppressPackageStartupMessages({
   library(readr)
   library(dplyr)
@@ -24,6 +24,7 @@ suppressPackageStartupMessages({
 
 rm(list = ls(all.names = TRUE))
 
+# import functions
 source("code/make_phyloseq_obj.R")
 source("code/clean_kraken_data.R")
 
@@ -103,7 +104,8 @@ mia_alpha_diversity <- function(physeq){
   
   # The colData contains the indices with their code names by default
   #divmat <- colData(tse)[, "LogModSkewness"]
-  
+
+  #plot
   diversity_plt <- plotColData(tse, "LogModSkewness", "pathologic_stage_label",color_by = "pathologic_stage_label")+
     scale_color_manual(values = c("blue", "#8070FE", "#EAB606","#FC4703"))+
     theme(legend.position = "none",
@@ -127,23 +129,24 @@ mia_alpha_diversity <- function(physeq){
 #kraken_data<- readRDS("data/kraken_norm_filtered.RDS")
 #kraken_data <-readRDS("data/kraken_raw_filtered.RDS")
 
-
+#import kraken data
 kraken_voom_snm <- readRDS("data/kraken_COAD.RDS")
 kraken_meta_voom <- readRDS("data/kraken_metaCOAD.RDS")
 result_voom <- clean_kraken_data(kraken_voom_snm,kraken_meta_voom)
 kraken_data <- result_voom$kraken_data
 kraken_meta <- result_voom$kraken_meta
 
-
+#make phylosew object
 physeq <- make_phyloseq_object(kraken_data, kraken_meta)
 #saveRDS(physeq, 'data/coad_raw_UNC_phyloseq.rds')
 
 # test plot
-plot_bar(physeq, x="pathologic_stage_label", fill="Phylum")
+#plot_bar(physeq, x="pathologic_stage_label", fill="Phylum")
 
-
+#run phyloseq alpha diversity
 mean_sd_alpha_div <- physeq_alpha_diversity(physeq) #only works for raw counts data
 
+#run mia alpha diversity and plot
 tse <- mia_alpha_diversity(physeq)
 
 
