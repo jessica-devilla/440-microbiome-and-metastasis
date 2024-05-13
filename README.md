@@ -60,7 +60,7 @@ Rscript code/phyloseq_alpha_diversity.R
 
 Figure 2:
 ```bash
-
+Rscript code/stageitoiv_kruskal.R
 Rscript code/zicoseq.R
 ```
 
@@ -68,6 +68,8 @@ Figure 3:
 ```bash
 
 Rscript code/voom_snm_analysis_figs.R
+Rscript code/pcaforfiltered.R
+Rscript code/SubmittingCenter_AnalysisK+S.R
 ```
 
 Figure 4:
@@ -77,6 +79,9 @@ Rscript code/phyloseq_by_normalization.R
 
 Figure 5:
 ```bash
+Rscript code/NormalizationTechniques.R
+Rscript code/Spearman Correlation Analysis.R
+Rscript code/stageitoiv_kruskal.R
 
 ```
 Supplementary Figure 1:
@@ -84,12 +89,12 @@ Adapted from Poore et al.
 
 Supplementary Figure 2:
 ```bash
-
+Rscript code/Spearman Correlation Analysis.R
 ```
 
 Supplementary Figure 3:
 ```bash
-
+Rscript code/NormalizationTechniques.R
 Rscript code/phyloseq_by_normalization.R
 ```
 
