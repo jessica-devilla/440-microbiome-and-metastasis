@@ -1,6 +1,8 @@
+# clean environment
 rm(list = ls(all.names = TRUE))
 set.seed(102299)
 
+# load packages
 suppressPackageStartupMessages({
   library(readr)
   library(dplyr)
@@ -24,12 +26,14 @@ suppressPackageStartupMessages({
   library(Rtsne)
 })
 
+# load functions
 source("code/clean_kraken_data.R")
 source("code/run_norm_func.R")
 source("code/make_phyloseq_obj.R")
 source("code/phyloseq_beta_diversity.R")
 source("code/run_zicoseq.R")
 
+# load voom-snm
 kraken_voom_snm <- readRDS("data/kraken_COAD.RDS")
 kraken_meta_voom <- readRDS("data/kraken_metaCOAD.RDS")
 result_voom <- clean_kraken_data(kraken_voom_snm,kraken_meta_voom)
@@ -94,6 +98,7 @@ ggsave(path = "figures", filename = "pca_allsamples_bystage_biplot.png", bg='whi
 umap_result <- umap(kraken_pca)
 colnames(umap_result$layout) <- c("UMAP_1", "UMAP_2")
 
+#plot UMAP by stage
 umap_plot <- ggplot(umap_result$layout, aes(x = UMAP_1, y = UMAP_2, color = kraken_meta$pathologic_stage_label)) +
   geom_point() +
   labs(x = "UMAP Dimension 1", y = "UMAP Dimension 2", color = "Stage") +
@@ -109,7 +114,7 @@ print(umap_plot)
 ggsave(path = "figures", filename = "umap_allsamples_bystage.png", plot=umap_plot, bg = 'white', width = 5.5, height = 5)
 
 
-
+#plot UMAP by submitting center
 umap_plot <- ggplot(umap_result$layout, aes(x = UMAP_1, y = UMAP_2, color = kraken_meta$data_submitting_center_label)) +
   geom_point() +
   labs(x = "UMAP Dimension 1", y = "UMAP Dimension 2", color = "Submitting \n Center") +
