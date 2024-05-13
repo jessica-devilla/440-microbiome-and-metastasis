@@ -106,10 +106,13 @@ mia_alpha_diversity <- function(physeq){
   
   diversity_plt <- plotColData(tse, "LogModSkewness", "pathologic_stage_label",color_by = "pathologic_stage_label")+
     scale_color_manual(values = c("blue", "#8070FE", "#EAB606","#FC4703"))+
-    theme(axis.text = element_text(size = 12), 
-          axis.title = element_text(size = 12),
-          legend.title = element_text(size = 12),
-          legend.text = element_text(size = 10))
+    theme(legend.position = "none",
+          axis.text = element_text(size = 12, color = "black"),
+          axis.title = element_text(size = 12, color = "black"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(color = "black"),
+          axis.ticks = element_line(color = "black"))
   
   
   print(diversity_plt)

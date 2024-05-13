@@ -125,7 +125,7 @@ ZicoSeq.plot <- function(ZicoSeq.obj, pvalue.type = c('p.adj.fdr','p.raw','p.adj
     geom_hline(aes(yintercept = -log10(cutoff)), color = 'gray', linetype = 'dashed') +
     scale_colour_gradient(low = "white", high = "#006D2C") +
     scale_y_continuous(limits = c(0, max(-log10(plot.data$pvals)) * 1.3)) +
-    ggrepel::geom_text_repel(data =plot.data_top, aes(label = taxa), max.overlaps = Inf, color = 'black',size=5) +
+    ggrepel::geom_text_repel(data =plot.data_top, aes(label = taxa), max.overlaps = Inf, color = 'black',size=4) +
     labs(x = bquote(R^2), y = paste0('-log10(',pvalue.type,')'),
          color = ifelse(ZicoSeq.obj$call$feature.dat.type == 'other','log(Standard deviation)','Prevalence'),
          size = ifelse(ZicoSeq.obj$call$feature.dat.type == 'other','Mean abuncance','Mean abundance')) +
@@ -199,7 +199,7 @@ run_zicoseq <- function(kraken_data, kraken_meta, name){
                                 out.dir = NULL, width = 10, height = 10)
   
   filename <- paste0("figures/zico_seq/zicoseq_stageivsiv_", name, ".png")
-  ggsave(filename, plot = zico_plot,width=5, height=5)
+  ggsave(filename, plot = zico_plot,width= 5, height=4)
   
   return(list(zicoObj = zicoObj, zicoseq_data = zicoseq_data))
   
