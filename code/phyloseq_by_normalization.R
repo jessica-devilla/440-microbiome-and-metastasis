@@ -21,7 +21,6 @@ source("code/run_norm_func.R")
 source("code/make_phyloseq_obj.R")
 source("code/phyloseq_beta_diversity.R")
 source("code/run_zicoseq.R")
-#source("code/run_zicoseq_og_plotting.R")
 
 
 
@@ -108,8 +107,8 @@ for (method in norm_methods) {
   ### run beta diversity function and make plot
   
   #distance_matrix <- physeq_beta_diversity(physeq, dist_methods = c("bray"), name = filename)
-  # save distance matrices in list
-  #distance_matrices[[method]] <- distance_matrix$bray
+  save distance matrices in list
+  distance_matrices[[method]] <- distance_matrix$bray
   
   ### run zico seq function and plot
   
@@ -141,7 +140,7 @@ colnames(pval_matrix) <- norm_methods
 for (i in 1:length(norm_methods)) {
   for (j in 1:length(norm_methods)) {
     cat(paste("Calculating Mantel correlation of ", norm_methods[i], " by ", norm_methods[j], "\n"))
-    mantel_result <- mantel(distance_matrices[[i]], distance_matrices[[j]], method = "spearman", permutations = 3)
+    mantel_result <- mantel(distance_matrices[[i]], distance_matrices[[j]], method = "spearman", permutations = 3) #decrease permutations for speed
     mantel_matrix[i, j] <- mantel_result$statistic
     print(mantel_result$statistic)
     print(mantel_result$signif)
