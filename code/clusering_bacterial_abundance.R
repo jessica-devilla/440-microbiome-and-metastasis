@@ -26,6 +26,7 @@ suppressPackageStartupMessages({
   library(aricode)
 })
 
+#import data
 source("code/clean_kraken_data.R")
 kraken_voom_snm <- readRDS("data/kraken_COAD.RDS")
 kraken_meta_voom <- readRDS("data/kraken_metaCOAD.RDS")
@@ -45,7 +46,7 @@ kraken_clust <- kraken_merge[ , !(names(kraken_merge) %in% c("id","stage_categor
 kraken_clust <- as.matrix(kraken_clust)
 kraken_clust <- scale(kraken_clust)
 
-
+# draw heatmap of genus clustering
 heatmap <- Heatmap(kraken_clust,
         name = "Abundance",
         cluster_rows = TRUE ,cluster_columns = FALSE,
@@ -86,7 +87,7 @@ num_clusters <- 4
 cluster_assignments <- cutree(hclust_res, k = num_clusters)
 plot(color_branches(dend_obj, k = num_clusters, col=c("#1E88E5", "#D81B60", "#FFC107", "#004D40")))
 
-
+# group ids of different stages with clustering label
 cluster_labels <- data.frame(cluster = factor(cluster_assignments), stage = factor(metadata$stage_category))
 cluster_summary <- cluster_labels %>%
   group_by(cluster, stage) %>%
@@ -95,7 +96,7 @@ cluster_summary <- cluster_labels %>%
 # Print cluster summary
 print(cluster_summary)
 
-
+#plot cluster summary
 p <- ggplot(cluster_summary, aes(x = cluster, y = count, fill = stage)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Cluster Summary", x = "Cluster", y = "Count", fill = "Stage") +
