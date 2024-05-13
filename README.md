@@ -9,7 +9,7 @@ Poore GD, Kopylova E, Zhu Q, et al. Microbiome analyses of blood and tissues sug
 - https://ftp.microbio.me/pub/cancer_microbiome_analysis/TCGA/ 
 - https://github.com/biocore/tcga
 
-The data contained in the data folder of this repo represents the normalized microbial abudance measurements for a range of cancer types (Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv) and corresponding metadata (Metadata-TCGA-Kraken-17625-Samples.csv). This data has been run through a pipeline called Kraken to allow for microbial taxonomy identification and Voom-SNM, a normalization and decontamination process. The result is a csv with values for microbial abundance for each species
+The data contained in the data folder of this repo represents the normalized microbial abudance measurements for a range of cancer types (Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv) and corresponding metadata (Metadata-TCGA-Kraken-17625-Samples.csv). This data has been run through a pipeline called Kraken to allow for microbial taxonomy identification and Voom-SNM, a normalization and decontamination process. The result is a csv with values for microbial abundance for each species in log counts-per-million.
 
 
 ## Folder Structure
