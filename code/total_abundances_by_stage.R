@@ -93,7 +93,7 @@ p <- ggplot(total_abund, aes(x = pathologic_stage_label, y = mean_val, fill = pa
 print(p)
 ggsave(path = "figures", filename = "total_bacterial_abundance_hist.png", bg='white')
 
-
+# plot jitter with summary data
 p <- ggplot() +
   geom_jitter(data = indiv_abund, aes(x = pathologic_stage_label, y = indiv_sums, color = pathologic_stage_label), width = 0.2, size = 2, alpha = 0.6) +
   geom_point(data = total_abund, aes(x = pathologic_stage_label, y = mean_val), stat = "summary", fun = "mean", size = 3, shape = 19, color = "black") + # Plot mean
