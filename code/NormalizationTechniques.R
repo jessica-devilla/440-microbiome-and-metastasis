@@ -44,7 +44,7 @@ batch_prep <- subset(kraken_metaCOAD, select = c("...1", "tissue_source_site_lab
 row.names(batch_prep) <- batch_prep$...1
 batch_prep <- subset(batch_prep, select = -c(...1))
 
-
+#Function for different normalization methods
 norm.func <- function(p1,norm_method){
   # remove the all zero genes
   p1 <- p1[rowSums(p1)>0,]
@@ -299,6 +299,7 @@ tot_CLRpos <- norm.func(transposed_df_kraken, 'CLR_poscounts')
 row.names(kraken_COAD_genus) <- kraken_COAD_genus$...1
 kraken_COAD_genus_clean <- subset(kraken_COAD_genus, select = -c(...1))
 
+#combining methods into one list
 data_list <- list(
   TSS = tot_TSS,
   MED = tot_MED,
@@ -316,7 +317,7 @@ data_list <- list(
   VoomSNM = kraken_COAD_genus_clean
 )
 
-# PREFORM UMAP 
+# PREFORM UMAP of different normalization methods
 library(umap)
 library(purrr)
 library(ggplot2)
@@ -351,7 +352,7 @@ print(umap_plot)
 dev.off()
 
 
-#PREFORM TSNE
+#Create TSNE Plot of Diff Normalization Methods
 perplexity <- 30  # Set your desired perplexity value
 tsne_list <- lapply(data_list, function(data) Rtsne(data, perplexity = perplexity)$Y)
 tsne_df <- do.call(rbind, Map(function(data, method) {
@@ -409,7 +410,7 @@ data_list_with_stages <- lapply(data_list, function(df) {
 
 
 
-
+#Preform Kruskal and Spearman Analysis over the Different Norm Methods
 methods <- unique(names(data_list_with_stages))
 print(methods)
 
