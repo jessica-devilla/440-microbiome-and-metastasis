@@ -27,7 +27,7 @@ The data contained in the data folder of this repo represents the normalized mic
 
 ### Prerequisites
 
-This project assumes use of a Unix command line shell and R. Before running, ensure that the Rscript executable is added to environmental PATH variable in order to allow access to Rscript from the command line. For Windows, the default installation location for R is C:\Program Files\R\R-4.3.2\bin. Package dependencies can be found in requirements.txt. Necessary packages will be installed and loaded within in individual scripts.
+This project assumes use of a Unix command line shell and R. Before running, ensure that the Rscript executable is added to environmental PATH variable in order to allow access to Rscript from the command line. For Windows, the default installation location for R is C:\Program Files\R\R-4.3.2\bin. Necessary packages will be installed and loaded within in individual scripts.
 
 ### Running the code
 
